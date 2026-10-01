@@ -1,73 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controllers/auth_controller.dart';
+import '../controllers/register_controller.dart';
 import '../core/constants/app_colors.dart';
-import 'product_list_screen.dart';
 
 /// User Registration Screen connected with DummyJSON `/users/add`
-class RegisterScreen extends StatefulWidget {
+/// Clean Stateless Architecture with reactive state managed by [RegisterController] & [AuthController].
+class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _agreeTerms = true;
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (!_agreeTerms) {
-      Get.snackbar(
-        'Terms Required',
-        'Please accept the Terms & Conditions to proceed.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    final authController = Get.find<AuthController>();
-    final success = await authController.register(
-      username: _usernameController.text,
-      email: _emailController.text,
-      password: _passwordController.text,
-      firstName: _firstNameController.text,
-      lastName: _lastNameController.text,
-    );
-
-    if (success && mounted) {
-      Get.snackbar(
-        'Account Created! 🎉',
-        'Welcome to AuraStore, ${_firstNameController.text}!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-      );
-      Get.offAll(() => const ProductListScreen(), transition: Transition.fadeIn);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final registerController = Get.put(RegisterController());
     final authController = Get.find<AuthController>();
 
     return Scaffold(
@@ -77,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
-          onPressed: () => Get.back(),
+          onPressed: registerController.backToLogin,
         ),
         title: const Text(
           'Create Account',
@@ -95,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Form(
-                key: _formKey,
+                key: registerController.formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -134,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               const SizedBox(height: 6),
                               TextFormField(
-                                controller: _firstNameController,
+                                controller: registerController.firstNameController,
                                 decoration: _buildInputDecoration('First name'),
                                 validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
                               ),
@@ -156,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               const SizedBox(height: 6),
                               TextFormField(
-                                controller: _lastNameController,
+                                controller: registerController.lastNameController,
                                 decoration: _buildInputDecoration('Last name'),
                                 validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
                               ),
@@ -178,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 6),
                     TextFormField(
-                      controller: _usernameController,
+                      controller: registerController.usernameController,
                       decoration: _buildInputDecoration('Choose a unique username', prefixIcon: Icons.person_outline_rounded),
                       validator: (val) => val == null || val.trim().isEmpty ? 'Username is required' : null,
                     ),
@@ -195,7 +140,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 6),
                     TextFormField(
-                      controller: _emailController,
+                      controller: registerController.emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: _buildInputDecoration('your.email@example.com', prefixIcon: Icons.email_outlined),
                       validator: (val) {
@@ -218,7 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 6),
                     Obx(() {
                       return TextFormField(
-                        controller: _passwordController,
+                        controller: registerController.passwordController,
                         obscureText: authController.obscurePassword,
                         decoration: _buildInputDecoration(
                           'Create a secure password',
@@ -244,16 +189,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Terms agreement
                     Row(
                       children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: _agreeTerms,
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                            onChanged: (val) => setState(() => _agreeTerms = val ?? false),
-                          ),
-                        ),
+                        Obx(() => SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Checkbox(
+                                value: registerController.agreeTerms.value,
+                                activeColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                onChanged: registerController.toggleAgreeTerms,
+                              ),
+                            )),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
@@ -271,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : _handleRegister,
+                          onPressed: isLoading ? null : registerController.handleRegister,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -314,7 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Get.back(),
+                          onTap: registerController.backToLogin,
                           child: const Text(
                             'Sign In',
                             style: TextStyle(

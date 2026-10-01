@@ -1,10 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ecommerce_app/models/pagination_query_model.dart';
 import 'package:ecommerce_app/repositories/product_repository.dart';
 import 'package:ecommerce_app/services/product_api_service.dart';
 
 class FakeProductApiService implements ProductApiService {
   @override
-  Future<Map<String, dynamic>> fetchProducts({int limit = 30, int skip = 0}) async {
+  Future<Map<String, dynamic>> fetchProducts({int limit = 30, int skip = 0, PaginationQuery? pagination}) async {
     return {
       'products': [
         {

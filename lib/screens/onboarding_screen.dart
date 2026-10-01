@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/onboarding_controller.dart';
 import '../core/constants/app_colors.dart';
-import 'login_screen.dart';
 
 class OnboardingItem {
   final String title;
@@ -19,19 +19,12 @@ class OnboardingItem {
   });
 }
 
-/// Interactive 3-slide Onboarding Screen inspired by the Figma UI Kit
-class OnboardingScreen extends StatefulWidget {
+/// Interactive 3-slide Onboarding Screen
+/// Clean Stateless Architecture using GetX reactive state (Obx) & OnboardingController.
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  int _currentIndex = 0;
-
-  final List<OnboardingItem> _pages = const [
+  static const List<OnboardingItem> _pages = [
     OnboardingItem(
       title: 'Discover Latest Trends & Curated Tech',
       subtitle:
@@ -58,29 +51,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
-  void _onNext() {
-    if (_currentIndex < _pages.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      Get.off(() => const LoginScreen(), transition: Transition.rightToLeftWithFade);
-    }
-  }
-
-  void _onSkip() {
-    Get.off(() => const LoginScreen(), transition: Transition.rightToLeftWithFade);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(OnboardingController());
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -120,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ],
                       ),
                       TextButton(
-                        onPressed: _onSkip,
+                        onPressed: controller.finishOnboarding,
                         child: const Text(
                           'Skip',
                           style: TextStyle(
@@ -137,11 +111,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Page Carousel
                 Expanded(
                   child: PageView.builder(
-                    controller: _pageController,
+                    controller: controller.pageController,
                     itemCount: _pages.length,
-                    onPageChanged: (index) {
-                      setState(() => _currentIndex = index);
-                    },
+                    onPageChanged: controller.onPageChanged,
                     itemBuilder: (context, index) {
                       final item = _pages[index];
                       return SingleChildScrollView(
@@ -158,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 decoration: BoxDecoration(
                                   color: item.accentColor.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
-                                ),
+                                  ),
                                 child: Center(
                                   child: Container(
                                     width: 170,
@@ -239,55 +211,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      // Smooth Page Indicators
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_pages.length, (index) {
-                          final isSelected = index == _currentIndex;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            height: 8,
-                            width: isSelected ? 28 : 8,
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary : AppColors.border,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          );
-                        }),
-                      ),
+                      // Smooth Page Indicators using Obx
+                      Obx(() {
+                        final currentIndex = controller.currentIndex;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_pages.length, (index) {
+                            final isSelected = index == currentIndex;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              height: 8,
+                              width: isSelected ? 28 : 8,
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.primary : AppColors.border,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        );
+                      }),
                       const SizedBox(height: 24),
 
-                      // Next / Get Started Action Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _onNext,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 2,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _currentIndex == _pages.length - 1 ? 'Get Started' : 'Continue',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      // Next / Get Started Action Button using Obx
+                      Obx(() {
+                        final isLastPage = controller.currentIndex == _pages.length - 1;
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => controller.nextPage(_pages.length),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded, size: 20),
-                            ],
+                              elevation: 2,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  isLastPage ? 'Get Started' : 'Continue',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_rounded, size: 20),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                 ),

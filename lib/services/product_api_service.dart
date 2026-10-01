@@ -1,9 +1,14 @@
 import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
+import '../models/pagination_query_model.dart';
 
 /// Contract for Product API operations
 abstract class ProductApiService {
-  Future<Map<String, dynamic>> fetchProducts({int limit = 30, int skip = 0});
+  Future<Map<String, dynamic>> fetchProducts({
+    int limit = 30,
+    int skip = 0,
+    PaginationQuery? pagination,
+  });
   Future<Map<String, dynamic>> searchProducts(String query);
   Future<Map<String, dynamic>> fetchProductsByCategory(String categorySlug);
   Future<Map<String, dynamic>> fetchProductById(int id);
@@ -17,10 +22,17 @@ class ProductApiServiceImpl implements ProductApiService {
   ProductApiServiceImpl({ApiClient? client}) : _client = client ?? ApiClient();
 
   @override
-  Future<Map<String, dynamic>> fetchProducts({int limit = 30, int skip = 0}) async {
+  Future<Map<String, dynamic>> fetchProducts({
+    int limit = 30,
+    int skip = 0,
+    PaginationQuery? pagination,
+  }) async {
+    final effectiveLimit = pagination?.limit ?? limit;
+    final effectiveSkip = pagination?.skip ?? skip;
+
     final response = await _client.get(
       ApiConstants.products,
-      queryParameters: {'limit': limit, 'skip': skip},
+      queryParameters: {'limit': effectiveLimit, 'skip': effectiveSkip},
     );
     return response as Map<String, dynamic>;
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../core/constants/app_colors.dart';
 import 'onboarding_screen.dart';
 import 'product_list_screen.dart';
@@ -50,9 +51,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     // If user is already logged in, navigate straight to product catalog; otherwise to onboarding
     if (authController.isAuthenticated) {
-      Get.offAll(() => const ProductListScreen(), transition: Transition.fadeIn);
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().toProducts();
+      } else {
+        Get.offAll(() => const ProductListScreen(), transition: Transition.fadeIn);
+      }
     } else {
-      Get.offAll(() => const OnboardingScreen(), transition: Transition.fadeIn);
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().toOnboarding();
+      } else {
+        Get.offAll(() => const OnboardingScreen(), transition: Transition.fadeIn);
+      }
     }
   }
 

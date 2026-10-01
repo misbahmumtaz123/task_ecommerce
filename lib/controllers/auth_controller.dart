@@ -110,8 +110,9 @@ class AuthController extends GetxController {
     );
   }
 
-  /// Logout current user
-  void logout() {
+  /// Logout current user and terminate session
+  Future<void> logout() async {
+    await _authRepository.logout();
     _currentUser.value = null;
     _errorMessage.value = '';
   }

@@ -5,6 +5,7 @@ import 'package:ecommerce_app/controllers/favorites_controller.dart';
 import 'package:ecommerce_app/core/network/api_exceptions.dart';
 import 'package:ecommerce_app/core/utils/result.dart';
 import 'package:ecommerce_app/models/category_model.dart';
+import 'package:ecommerce_app/models/pagination_query_model.dart';
 import 'package:ecommerce_app/models/product_model.dart';
 import 'package:ecommerce_app/models/product_response_model.dart';
 import 'package:ecommerce_app/repositories/product_repository.dart';
@@ -35,7 +36,7 @@ class FakeProductRepository implements ProductRepository {
   }
 
   @override
-  Future<Result<ProductResponseModel>> getProducts({int limit = 30, int skip = 0}) async {
+  Future<Result<ProductResponseModel>> getProducts({int limit = 30, int skip = 0, PaginationQuery? pagination}) async {
     return Result.success(const ProductResponseModel(products: [], total: 0, skip: 0, limit: 30));
   }
 

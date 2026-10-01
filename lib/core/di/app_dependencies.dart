@@ -3,6 +3,7 @@ import '../network/api_client.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/detail_controller.dart';
 import '../../controllers/favorites_controller.dart';
+import '../../controllers/navigation_controller.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/product_repository.dart';
 import '../../services/auth_api_service.dart';
@@ -37,6 +38,17 @@ class AppDependencies {
 
     final aService = AuthApiServiceImpl(client: client);
     final aRepo = authRepository ?? AuthRepositoryImpl(apiService: aService);
+
+    // Register Repositories in GetX for easy lookup by bindings/controllers
+    if (!Get.isRegistered<ProductRepository>()) {
+      Get.put<ProductRepository>(pRepo, permanent: true);
+    }
+    if (!Get.isRegistered<AuthRepository>()) {
+      Get.put<AuthRepository>(aRepo, permanent: true);
+    }
+    if (!Get.isRegistered<NavigationController>()) {
+      Get.put<NavigationController>(NavigationController(), permanent: true);
+    }
 
     // Register GetX Controllers safely as permanent singletons
     if (!Get.isRegistered<FavoritesController>()) {

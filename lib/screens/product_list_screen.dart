@@ -18,13 +18,9 @@ import '../widgets/category_selector.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_search_bar.dart';
 import '../widgets/state_views.dart';
-import 'cart_screen.dart';
-import 'favorites_screen.dart';
-import 'login_screen.dart';
-import 'product_detail_screen.dart';
+import '../controllers/navigation_controller.dart';
+import '../core/utils/enums/sort_option.dart';
 import '../models/user_model.dart';
-
-enum SortOption { featured, priceLowToHigh, priceHighToLow, ratingHighToLow }
 
 /// Product listing screen powered completely by Riverpod state management.
 /// Demonstrates ref.watch(), ref.read(), ref.listen(), and rebuild optimization using select().
@@ -291,11 +287,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                   ),
                   tooltip: 'Favorites',
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const FavoritesScreen(),
-                      ),
-                    );
+                    NavigationController.to.toFavorites();
                   },
                 ),
                 if (count > 0)
@@ -328,11 +320,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           }),
           // Shopping Cart Action
           CartBadgeButton(
-            onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
-            },
+            onPressed: () => NavigationController.to.toCart(context),
           ),
           const SizedBox(width: 4),
           // User Profile / Auth Action (GetX Obx)
@@ -372,12 +360,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 color: AppColors.textPrimary,
               ),
               tooltip: 'Sign In',
-              onPressed: () {
-                Get.to(
-                  () => const LoginScreen(),
-                  transition: Transition.downToUp,
-                );
-              },
+              onPressed: () => NavigationController.to.toLoginModal(),
             );
           }),
           const SizedBox(width: 8),
@@ -548,15 +531,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                         return ProductCard(
                           product: product,
                           onTap: () {
-                            // Fetch product details by ID on navigation
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => ProductDetailScreen(
-                                  productId: product.id,
-                                  initialProduct: product,
-                                  //add debug code here.....
-                                ),
-                              ),
+                            NavigationController.to.toProductDetail(
+                              product.id,
+                              initialProduct: product,
                             );
                           },
                           onAddToCart: () {

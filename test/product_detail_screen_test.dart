@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'package:ecommerce_app/controllers/detail_controller.dart';
 import 'package:ecommerce_app/controllers/favorites_controller.dart';
 import 'package:ecommerce_app/core/utils/result.dart';
 import 'package:ecommerce_app/models/category_model.dart';
+import 'package:ecommerce_app/models/pagination_query_model.dart';
 import 'package:ecommerce_app/models/product_model.dart';
 import 'package:ecommerce_app/models/product_response_model.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart';
@@ -28,7 +30,7 @@ class _MockProductRepo implements ProductRepository {
 
   @override
   Future<Result<ProductResponseModel>> getProducts(
-          {int limit = 30, int skip = 0}) async =>
+          {int limit = 30, int skip = 0, PaginationQuery? pagination}) async =>
       Result.success(ProductResponseModel(
           products: [product], total: 1, skip: 0, limit: 1));
 
@@ -49,9 +51,15 @@ class _MockProductRepo implements ProductRepository {
 // ---------------------------------------------------------------------------
 Widget _buildApp(ProductModel product, {ProductModel? initialProduct}) {
   Get.put<FavoritesController>(FavoritesController());
+  final mockRepo = _MockProductRepo(product);
+  Get.put<ProductRepository>(mockRepo);
+  final detailController = Get.put<DetailController>(DetailController(mockRepo));
+  if (initialProduct != null) {
+    detailController.prepareForProduct(product.id, initialProduct: initialProduct);
+  }
   return MultiProvider(
     providers: [
-      Provider<ProductRepository>.value(value: _MockProductRepo(product)),
+      Provider<ProductRepository>.value(value: mockRepo),
       ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
     ],
     child: GetMaterialApp(

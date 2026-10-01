@@ -1,70 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/auth_controller.dart';
-import '../core/constants/app_colors.dart';
-import 'product_list_screen.dart';
-import 'register_screen.dart';
 
-/// Modern authentication Login Screen inspired by the eCommerce UI Kit
-class LoginScreen extends StatefulWidget {
+import '../controllers/auth_controller.dart';
+import '../controllers/login_controller.dart';
+import '../core/constants/app_colors.dart';
+
+/// Modern authentication Login Screen
+/// Clean Stateless Architecture with reactive state managed by [LoginController] & [AuthController].
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authController = Get.find<AuthController>();
-    final success = await authController.login(
-      _usernameController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    if (success && mounted) {
-      Get.snackbar(
-        'Welcome, ${authController.currentUser?.firstName ?? 'Shopper'}! 🎉',
-        'Signed in successfully with DummyJSON.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 2),
-      );
-      Get.offAll(() => const ProductListScreen(), transition: Transition.fadeIn);
-    } else if (mounted) {
-      Get.snackbar(
-        'Sign In Failed',
-        authController.errorMessage.isNotEmpty
-            ? authController.errorMessage
-            : 'Unable to sign in. Please check your credentials.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
-        duration: const Duration(seconds: 3),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final loginController = Get.put(LoginController());
     final authController = Get.find<AuthController>();
 
     return Scaffold(
@@ -76,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Form(
-                key: _formKey,
+                key: loginController.formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -132,8 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: InkWell(
                         onTap: () {
                           authController.fillDemoCredentials(
-                            _usernameController,
-                            _passwordController,
+                            loginController.usernameController,
+                            loginController.passwordController,
                           );
                         },
                         child: Row(
@@ -210,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     TextFormField(
-                      controller: _usernameController,
+                      controller: loginController.usernameController,
                       decoration: InputDecoration(
                         hintText: 'Enter your username (e.g. emilys)',
                         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
@@ -252,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 6),
                     Obx(() {
                       return TextFormField(
-                        controller: _passwordController,
+                        controller: loginController.passwordController,
                         obscureText: authController.obscurePassword,
                         decoration: InputDecoration(
                           hintText: 'Enter your password',
@@ -353,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : _handleLogin,
+                          onPressed: isLoading ? null : loginController.handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -408,9 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Get.offAll(() => const ProductListScreen(), transition: Transition.fadeIn);
-                        },
+                        onPressed: loginController.continueAsGuest,
                         icon: const Icon(Icons.storefront_outlined, size: 20),
                         label: const Text('Continue as Guest'),
                         style: OutlinedButton.styleFrom(
@@ -437,9 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Get.to(() => const RegisterScreen(), transition: Transition.rightToLeft);
-                          },
+                          onTap: loginController.goToRegister,
                           child: const Text(
                             'Sign Up',
                             style: TextStyle(

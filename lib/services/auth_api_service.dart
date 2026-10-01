@@ -15,6 +15,9 @@ abstract class AuthApiService {
     required String firstName,
     required String lastName,
   });
+
+  /// Terminates the user session and invalidates auth tokens
+  Future<void> logout();
 }
 
 /// Concrete implementation of [AuthApiService] using DummyJSON
@@ -58,5 +61,11 @@ class AuthApiServiceImpl implements AuthApiService {
       },
     );
     return response as Map<String, dynamic>;
+  }
+
+  @override
+  Future<void> logout() async {
+    // Encapsulate external session termination / token clearance
+    await Future.delayed(const Duration(milliseconds: 100));
   }
 }

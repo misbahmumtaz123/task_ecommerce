@@ -45,6 +45,11 @@ class FakeAuthRepository implements AuthRepository {
       ),
     );
   }
+
+  @override
+  Future<Result<bool>> logout() async {
+    return Result.success(true);
+  }
 }
 
 void main() {
@@ -84,7 +89,7 @@ void main() {
       await authController.login('emilys', 'emilyspassword');
       expect(authController.isAuthenticated, isTrue);
 
-      authController.logout();
+      await authController.logout();
       expect(authController.isAuthenticated, isFalse);
       expect(authController.currentUser, isNull);
     });

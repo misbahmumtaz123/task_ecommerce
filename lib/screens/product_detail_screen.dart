@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+
+import '../controllers/detail_controller.dart';
 import '../controllers/favorites_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/currency_formatter.dart';
 import '../models/product_model.dart';
@@ -13,9 +16,9 @@ import 'cart_screen.dart';
 /// Screen displaying complete product specifications, interactive gallery,
 /// customer reviews, stock details, and quantity-aware cart controls.
 ///
-/// Architecture: Uses local StatefulWidget state to manage loading/product data.
-/// This avoids all GetX singleton stale-state issues that caused the blank screen.
-class ProductDetailScreen extends StatefulWidget {
+/// Architecture: Clean StatelessWidget with reactive Obx state management via [DetailController].
+/// Eliminates screen-level setState rebuilds and decouples UI from data fetching logic.
+class ProductDetailScreen extends StatelessWidget {
   final int productId;
   final ProductModel? initialProduct;
 
@@ -26,171 +29,26 @@ class ProductDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
-}
-
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  ProductRepository? _repository;
-
-  // --- Local state: reactive within this screen ---
-  ProductModel? _product;
-  bool _isLoading = false;
-  String? _errorMessage;
-  int _selectedImageIndex = 0;
-  int _selectedQuantity = 1;
-  late PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-
-    // Show initial product immediately (prevents blank flash)
-    if (widget.initialProduct != null) {
-      _product = widget.initialProduct;
-    } else {
-      _isLoading = true;
-    }
-    _selectedQuantity = 1;
-
-    // Always fetch fresh full details from API in background after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchProduct();
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_repository == null) {
-      try {
-        _repository = context.read<ProductRepository>();
-      } catch (_) {
-        _repository = ProductRepositoryImpl();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchProduct() async {
-    final repo = _repository ?? ProductRepositoryImpl();
-    final result = await repo.getProductById(widget.productId);
-    if (!mounted) return;
-
-    result.when(
-      success: (data) {
-        setState(() {
-          _product = data;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      },
-      failure: (exception) {
-        setState(() {
-          _isLoading = false;
-          // Only set error if we have no fallback to show
-          if (_product == null) {
-            _errorMessage = exception.message;
-          }
-        });
-      },
-    );
-  }
-
-  List<String> _buildImageList() {
-    if (_product == null) return [];
-    final images = <String>[];
-    for (final img in _product!.images) {
-      final clean = img.trim();
-      if (clean.isNotEmpty && !images.contains(clean)) {
-        images.add(clean);
-      }
-    }
-    final thumb = _product!.thumbnail.trim();
-    if (thumb.isNotEmpty && !images.contains(thumb)) {
-      images.add(thumb);
-    }
-    return images;
-  }
-
-  void _incrementQuantity() {
-    final maxStock = _product?.stock ?? 1;
-    if (_selectedQuantity < maxStock && _selectedQuantity < 99) {
-      setState(() => _selectedQuantity++);
-    }
-  }
-
-  void _decrementQuantity() {
-    if (_selectedQuantity > 1) {
-      setState(() => _selectedQuantity--);
-    }
-  }
-
-  void _openImageZoom(String imageUrl) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(12),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return const SizedBox(
-                        height: 200,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (_, _, _) => const Icon(
-                      Icons.broken_image_rounded,
-                      size: 80,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton.filled(
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
-                style: IconButton.styleFrom(
-                    backgroundColor: Colors.black.withValues(alpha: 0.6)),
-                onPressed: () => Navigator.of(ctx).pop(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final detailController = Get.isRegistered<DetailController>()
+        ? Get.find<DetailController>()
+        : Get.put(DetailController(
+            Get.isRegistered<ProductRepository>()
+                ? Get.find<ProductRepository>()
+                : ProductRepositoryImpl(),
+          ));
+
     final favoritesController = Get.isRegistered<FavoritesController>()
         ? Get.find<FavoritesController>()
         : Get.put(FavoritesController(), permanent: true);
 
-    final images = _buildImageList();
+    // Initial load trigger without invoking async state modification during build cycle
+    if (detailController.product?.id != productId && !detailController.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        detailController.prepareForProduct(productId, initialProduct: initialProduct);
+        detailController.fetchProduct(productId, fallbackProduct: initialProduct);
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -200,50 +58,64 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.textPrimary, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Get.isRegistered<NavigationController>()) {
+              Get.find<NavigationController>().back();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
-        title: Text(
-          _product != null
-              ? _product!.category.toUpperCase()
-              : 'PRODUCT DETAILS',
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
+        title: Obx(() {
+          final p = detailController.product;
+          return Text(
+            p != null ? p.category.toUpperCase() : 'PRODUCT DETAILS',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          );
+        }),
         actions: [
           Obx(() {
-            final isFav = favoritesController.isFavorite(widget.productId);
+            final isFav = favoritesController.isFavorite(productId);
             return IconButton(
               icon: Icon(
                 isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                 color: isFav ? AppColors.error : AppColors.textPrimary,
               ),
               onPressed: () {
-                if (_product != null) {
-                  favoritesController.toggleFavorite(_product!);
+                final p = detailController.product;
+                if (p != null) {
+                  favoritesController.toggleFavorite(p);
                 }
               },
             );
           }),
           CartBadgeButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CartScreen()),
-            ),
+            onPressed: () {
+              if (Get.isRegistered<NavigationController>()) {
+                Get.find<NavigationController>().toCart(context);
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                );
+              }
+            },
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: _buildBody(images),
-      bottomNavigationBar: _buildBottomBar(),
+      body: Obx(() => _buildBody(context, detailController)),
+      bottomNavigationBar: Obx(() => _buildBottomBar(context, detailController)),
     );
   }
 
-  Widget _buildBody(List<String> images) {
+  Widget _buildBody(BuildContext context, DetailController controller) {
     // Show loading spinner only when we have NO product to show yet
-    if (_isLoading && _product == null) {
+    if (controller.isLoading && controller.product == null) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -262,7 +134,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Show error only if we have no product fallback
-    if (_errorMessage != null && _product == null) {
+    if (controller.errorMessage.isNotEmpty && controller.product == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -272,19 +144,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const Icon(Icons.wifi_off_rounded,
                   size: 56, color: AppColors.error),
               const SizedBox(height: 16),
-              Text(_errorMessage!,
+              Text(controller.errorMessage,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 14)),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _errorMessage = null;
-                    _isLoading = true;
-                  });
-                  _fetchProduct();
-                },
+                onPressed: () => controller.fetchProduct(productId),
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
@@ -297,7 +163,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
-    if (_product == null) {
+    final product = controller.product;
+    if (product == null) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -330,11 +197,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildGallery(images, galleryHeight),
+              _buildGallery(context, controller, galleryHeight),
               const SizedBox(height: 20),
-              _buildProductInfo(),
+              _buildProductInfo(product),
               const SizedBox(height: 24),
-              _buildReviewsSection(),
+              _buildReviewsSection(product),
               const SizedBox(height: 24),
             ],
           ),
@@ -343,10 +210,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildGallery(List<String> images, double height) {
+  Widget _buildGallery(
+      BuildContext context, DetailController controller, double height) {
+    final images = controller.imageList;
+    final product = controller.product;
+
     if (images.isEmpty) {
-      // Show a thumbnail fallback or placeholder
-      final thumb = _product?.thumbnail ?? '';
+      final thumb = product?.thumbnail ?? '';
       return Container(
         height: height,
         width: double.infinity,
@@ -374,6 +244,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
+    final pageController = PageController(
+      initialPage: controller.selectedImageIndex.clamp(0, images.length - 1),
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -398,14 +272,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Stack(
               children: [
                 PageView.builder(
-                  controller: _pageController,
+                  controller: pageController,
                   itemCount: images.length,
-                  onPageChanged: (index) {
-                    setState(() => _selectedImageIndex = index);
-                  },
+                  onPageChanged: controller.setSelectedImageIndex,
                   itemBuilder: (_, i) {
                     return GestureDetector(
-                      onTap: () => _openImageZoom(images[i]),
+                      onTap: () => controller.openImageZoom(context, images[i]),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Image.network(
@@ -426,9 +298,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             );
                           },
                           errorBuilder: (_, _, _) {
-                            // fallback to thumbnail
-                            final thumb =
-                                _product?.thumbnail.trim() ?? '';
+                            final thumb = product?.thumbnail.trim() ?? '';
                             if (thumb.isNotEmpty && images[i] != thumb) {
                               return Image.network(thumb,
                                   fit: BoxFit.contain,
@@ -463,7 +333,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_selectedImageIndex + 1} / ${images.length}',
+                        '${controller.selectedImageIndex + 1} / ${images.length}',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -481,7 +351,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(images.length, (i) {
-                        final isCurrent = i == _selectedImageIndex;
+                        final isCurrent =
+                            i == controller.selectedImageIndex;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -511,13 +382,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   scrollDirection: Axis.horizontal,
                   itemCount: images.length,
                   itemBuilder: (_, i) {
-                    final isSelected = i == _selectedImageIndex;
+                    final isSelected = i == controller.selectedImageIndex;
                     return GestureDetector(
                       onTap: () {
-                        setState(() => _selectedImageIndex = i);
-                        _pageController.animateToPage(i,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut);
+                        controller.setSelectedImageIndex(i);
+                        if (pageController.hasClients) {
+                          pageController.animateToPage(i,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut);
+                        }
                       },
                       child: Container(
                         width: 52,
@@ -556,8 +429,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildProductInfo() {
-    final product = _product!;
+  Widget _buildProductInfo(ProductModel product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -732,7 +604,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             value: product.returnPolicy ?? '30 Days Return',
           ),
         ]),
-        if (product.weight != null || product.dimensions?.hasDimensions == true) ...[
+        if (product.weight != null ||
+            product.dimensions?.hasDimensions == true) ...[
           const SizedBox(height: 12),
           _specRow([
             if (product.weight != null)
@@ -835,8 +708,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildReviewsSection() {
-    final product = _product!;
+  Widget _buildReviewsSection(ProductModel product) {
     if (product.reviews.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -951,12 +823,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildBottomBar() {
-    if (_product == null) return const SizedBox.shrink();
+  Widget _buildBottomBar(BuildContext context, DetailController controller) {
+    final product = controller.product;
+    if (product == null) return const SizedBox.shrink();
 
-    final product = _product!;
     final maxStock = product.stock > 0 ? product.stock : 1;
-    final totalPrice = product.price * _selectedQuantity;
+    final selectedQty = controller.selectedQuantity;
 
     return Container(
       decoration: BoxDecoration(
@@ -993,18 +865,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove, size: 18),
-                          color: _selectedQuantity > 1
+                          color: selectedQty > 1
                               ? AppColors.textPrimary
                               : AppColors.textMuted,
                           padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(
                               minWidth: 36, minHeight: 36),
-                          onPressed: _decrementQuantity,
+                          onPressed: controller.decrementQuantity,
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
-                            '$_selectedQuantity',
+                            '$selectedQty',
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -1013,13 +885,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.add, size: 18),
-                          color: _selectedQuantity < maxStock
+                          color: selectedQty < maxStock
                               ? AppColors.primary
                               : AppColors.textMuted,
                           padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(
                               minWidth: 36, minHeight: 36),
-                          onPressed: _incrementQuantity,
+                          onPressed: controller.incrementQuantity,
                         ),
                       ],
                     ),
@@ -1034,31 +906,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           : () {
                               context
                                   .read<CartProvider>()
-                                  .addItemWithQuantity(product, _selectedQuantity);
+                                  .addItemWithQuantity(product, selectedQty);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      '$_selectedQuantity × ${product.title} added to cart!'),
+                                      '$selectedQty × ${product.title} added to cart!'),
                                   duration: const Duration(seconds: 2),
                                   behavior: SnackBarBehavior.floating,
                                   action: SnackBarAction(
                                     label: 'VIEW CART',
                                     textColor: Colors.amber,
-                                    onPressed: () => Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                          builder: (_) => const CartScreen()),
-                                    ),
+                                    onPressed: () {
+                                      if (Get.isRegistered<NavigationController>()) {
+                                        Get.find<NavigationController>().toCart(context);
+                                      } else {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (_) => const CartScreen()),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
                               );
                             },
-                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
+                      icon: const Icon(Icons.shopping_bag_outlined, size: 20),
                       label: Text(
-                        product.stock > 0
-                            ? 'Add to Cart • ${CurrencyFormatter.format(totalPrice)}'
-                            : 'Out of Stock',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        product.stock <= 0
+                            ? 'Out of Stock'
+                            : 'Add to Cart • ${CurrencyFormatter.format(product.price * selectedQty)}',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
@@ -1067,11 +943,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: AppColors.border,
                         disabledForegroundColor: AppColors.textMuted,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        elevation: 2,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -1084,12 +960,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  String _formatDate(String raw) {
+  static String _formatDate(String isoString) {
     try {
-      final d = DateTime.parse(raw);
-      return '${d.day}/${d.month}/${d.year}';
+      final dt = DateTime.parse(isoString);
+      return '${dt.day}/${dt.month}/${dt.year}';
     } catch (_) {
-      return raw;
+      return isoString;
     }
   }
 }
@@ -1099,9 +975,11 @@ class _SpecData {
   final String title;
   final String value;
   final bool highlight;
-  const _SpecData(
-      {required this.icon,
-      required this.title,
-      required this.value,
-      this.highlight = false});
+
+  const _SpecData({
+    required this.icon,
+    required this.title,
+    required this.value,
+    this.highlight = false,
+  });
 }

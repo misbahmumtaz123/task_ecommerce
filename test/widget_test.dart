@@ -6,7 +6,7 @@ import 'package:ecommerce_app/controllers/auth_controller.dart';
 import 'package:ecommerce_app/controllers/favorites_controller.dart';
 import 'package:ecommerce_app/controllers/detail_controller.dart';
 import 'package:ecommerce_app/core/network/api_client.dart';
-import 'package:ecommerce_app/main.dart';
+import 'package:ecommerce_app/app.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart';
 import 'package:ecommerce_app/providers/product_list_notifier.dart';
 import 'package:ecommerce_app/repositories/auth_repository.dart';

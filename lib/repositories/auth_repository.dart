@@ -17,6 +17,9 @@ abstract class AuthRepository {
     required String firstName,
     required String lastName,
   });
+
+  /// Logs out the user, terminating session and clearing stored tokens
+  Future<Result<bool>> logout();
 }
 
 /// Concrete implementation of [AuthRepository]
@@ -63,6 +66,18 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final user = UserModel.fromJson(json);
       return Result.success(user);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } catch (e) {
+      return Result.failure(UnexpectedApiException(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<bool>> logout() async {
+    try {
+      await _apiService.logout();
+      return Result.success(true);
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
