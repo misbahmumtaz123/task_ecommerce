@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
-/// Clean modern search input field
+// search
 class ProductSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
@@ -35,16 +35,10 @@ class ProductSearchBar extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 14,
-          color: AppColors.textPrimary,
-        ),
+        style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
           prefixIcon: const Icon(
             Icons.search_rounded,
             color: AppColors.primary,

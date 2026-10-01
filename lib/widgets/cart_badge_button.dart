@@ -3,15 +3,9 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
 
-/// App Bar action button displaying cart icon with reactive item count badge
 class CartBadgeButton extends StatelessWidget {
   final VoidCallback onPressed;
-
-  const CartBadgeButton({
-    super.key,
-    required this.onPressed,
-  });
-
+  const CartBadgeButton({super.key, required this.onPressed});
   @override
   Widget build(BuildContext context) {
     return Consumer<CartProvider>(
@@ -21,7 +15,10 @@ class CartBadgeButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.shopping_bag_outlined,
+                color: AppColors.textPrimary,
+              ),
               onPressed: onPressed,
             ),
             if (count > 0)

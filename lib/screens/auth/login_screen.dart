@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/login_controller.dart';
+import '../../core/constants/app_colors.dart';
 
-import '../controllers/auth_controller.dart';
-import '../controllers/login_controller.dart';
-import '../core/constants/app_colors.dart';
-
-/// Modern authentication Login Screen
-/// Clean Stateless Architecture with reactive state managed by [LoginController] & [AuthController].
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -14,55 +11,46 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final loginController = Get.put(LoginController());
     final authController = Get.find<AuthController>();
-
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
               child: Form(
                 key: loginController.formKey,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Brand Icon
                     Center(
                       child: Container(
-                        width: 60,
-                        height: 60,
+                        width: 75,
+                        height: 75,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [AppColors.primary, AppColors.secondary],
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(13),
                         ),
-                        child: const Icon(Icons.shopping_bag_rounded, size: 30, color: Colors.white),
+                        child: const Icon(
+                          Icons.shopping_bag_rounded,
+                          size: 32,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Header
+                    const SizedBox(height: 20),
                     const Center(
                       child: Text(
-                        'Welcome Back 👋',
+                        'Welcome Back',
                         style: TextStyle(
-                          fontSize: 26,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Text(
-                        'Sign in to access your curated catalog & favorites',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -71,11 +59,16 @@ class LoginScreen extends StatelessWidget {
                     // Demo Account Quick Fill Button
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: InkWell(
                         onTap: () {
@@ -86,18 +79,22 @@ class LoginScreen extends StatelessWidget {
                         },
                         child: Row(
                           children: [
-                            const Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 20),
-                            const SizedBox(width: 10),
+                            const Icon(
+                              Icons.auto_awesome_rounded,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
                                   Text(
-                                    '1-Tap Autofill Demo Account',
+                                    'For Demo Login with these credential',
                                     style: TextStyle(
                                       color: AppColors.primaryDark,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                      fontSize: 12,
                                     ),
                                   ),
                                   Text(
@@ -110,7 +107,11 @@ class LoginScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.touch_app_rounded, color: AppColors.primary, size: 20),
+                            const Icon(
+                              Icons.touch_app_rounded,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
                           ],
                         ),
                       ),
@@ -119,25 +120,36 @@ class LoginScreen extends StatelessWidget {
 
                     // Reactive Error Message
                     Obx(() {
-                      if (authController.errorMessage.isEmpty) return const SizedBox.shrink();
+                      if (authController.errorMessage.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.error,
+                              size: 18,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 authController.errorMessage,
                                 style: const TextStyle(
                                   color: AppColors.error,
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -156,28 +168,12 @@ class LoginScreen extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     TextFormField(
                       controller: loginController.usernameController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your username (e.g. emilys)',
-                        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 20),
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                        ),
+                      decoration: _buildInputDecoration(
+                        'Enter your username (e.g. emilys)',
+                        prefixIcon: Icons.person_outline_rounded,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -186,7 +182,7 @@ class LoginScreen extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
 
                     // Password Field
                     const Text(
@@ -197,15 +193,14 @@ class LoginScreen extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     Obx(() {
                       return TextFormField(
                         controller: loginController.passwordController,
                         obscureText: authController.obscurePassword,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textSecondary, size: 20),
+                        decoration: _buildInputDecoration(
+                          'Enter your password',
+                          prefixIcon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             icon: Icon(
                               authController.obscurePassword
@@ -216,21 +211,6 @@ class LoginScreen extends StatelessWidget {
                             ),
                             onPressed: authController.togglePasswordVisibility,
                           ),
-                          filled: true,
-                          fillColor: AppColors.surface,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.border),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -240,24 +220,26 @@ class LoginScreen extends StatelessWidget {
                         },
                       );
                     }),
-                    const SizedBox(height: 12),
-
-                    // Remember Me & Forgot Password
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            Obx(() => SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Checkbox(
-                                    value: authController.rememberMe,
-                                    activeColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                    onChanged: authController.toggleRememberMe,
+                            Obx(
+                              () => SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: authController.rememberMe,
+                                  activeColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                )),
+                                  onChanged: authController.toggleRememberMe,
+                                ),
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             const Text(
                               'Remember me',
@@ -276,7 +258,10 @@ class LoginScreen extends StatelessWidget {
                               snackPosition: SnackPosition.BOTTOM,
                               backgroundColor: AppColors.surface,
                               colorText: AppColors.textPrimary,
-                              icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                              icon: const Icon(
+                                Icons.info_outline_rounded,
+                                color: AppColors.primary,
+                              ),
                               margin: const EdgeInsets.all(16),
                               borderRadius: 12,
                               duration: const Duration(seconds: 3),
@@ -293,15 +278,15 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    // Submit Button
+                    const SizedBox(height: 10),
                     Obx(() {
                       final isLoading = authController.isLoading;
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : loginController.handleLogin,
+                          onPressed: isLoading
+                              ? null
+                              : loginController.handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -317,7 +302,9 @@ class LoginScreen extends StatelessWidget {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -330,9 +317,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                       );
                     }),
-                    const SizedBox(height: 24),
-
-                    // Or Continue With Divider
+                    const SizedBox(height: 8),
                     Row(
                       children: const [
                         Expanded(child: Divider(color: AppColors.border)),
@@ -350,15 +335,16 @@ class LoginScreen extends StatelessWidget {
                         Expanded(child: Divider(color: AppColors.border)),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    // Continue as Guest Option
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: loginController.continueAsGuest,
                         icon: const Icon(Icons.storefront_outlined, size: 20),
-                        label: const Text('Continue as Guest'),
+                        label: const Text(
+                          'Continue as Guest',
+                          style: TextStyle(fontSize: 14),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textPrimary,
                           side: const BorderSide(color: AppColors.border),
@@ -369,9 +355,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Register Navigation Link
+                    const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -395,13 +379,42 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  static InputDecoration _buildInputDecoration(
+    String hint, {
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13.5),
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+          : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
     );
   }

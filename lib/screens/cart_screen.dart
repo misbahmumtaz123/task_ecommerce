@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import '../controllers/auth_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../core/constants/app_colors.dart';
+import '../core/routing/app_routes.dart';
 import '../core/utils/currency_formatter.dart';
 import '../providers/cart_provider.dart';
 import '../widgets/state_views.dart';
@@ -19,7 +23,11 @@ class CartScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -38,7 +46,10 @@ class CartScreen extends StatelessWidget {
                 onPressed: () {
                   _showClearCartDialog(context, cart);
                 },
-                child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+                child: const Text(
+                  'Clear',
+                  style: TextStyle(color: AppColors.error),
+                ),
               );
             },
           ),
@@ -100,7 +111,9 @@ class CartScreen extends StatelessWidget {
                                         height: 64,
                                         decoration: BoxDecoration(
                                           color: AppColors.surfaceVariant,
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: Image.network(
                                           item.product.thumbnail,
@@ -117,7 +130,8 @@ class CartScreen extends StatelessWidget {
                                       // Title and Price
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               item.product.title,
@@ -131,7 +145,9 @@ class CartScreen extends StatelessWidget {
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              CurrencyFormatter.format(item.product.price),
+                                              CurrencyFormatter.format(
+                                                item.product.price,
+                                              ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
@@ -156,10 +172,13 @@ class CartScreen extends StatelessWidget {
                                 children: [
                                   _buildQuantityButton(
                                     icon: Icons.remove,
-                                    onTap: () => cart.removeSingleItem(item.product.id),
+                                    onTap: () =>
+                                        cart.removeSingleItem(item.product.id),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
                                     child: Text(
                                       item.quantity.toString(),
                                       style: const TextStyle(
@@ -184,10 +203,15 @@ class CartScreen extends StatelessWidget {
 
                   // Summary and Checkout
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      border: const Border(top: BorderSide(color: AppColors.border)),
+                      border: const Border(
+                        top: BorderSide(color: AppColors.border),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.05),
@@ -225,9 +249,22 @@ class CartScreen extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
+                                final authController =
+                                    Get.isRegistered<AuthController>()
+                                        ? Get.find<AuthController>()
+                                        : null;
+
+                                if (authController == null ||
+                                    !authController.isAuthenticated) {
+                                  _showLoginRequiredDialog(context);
+                                  return;
+                                }
+
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Order placed successfully! (Demo)'),
+                                    content: Text(
+                                      'Order placed successfully! (Demo)',
+                                    ),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -235,14 +272,19 @@ class CartScreen extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                               child: const Text(
                                 'Proceed to Checkout',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -282,7 +324,9 @@ class CartScreen extends StatelessWidget {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Clear Cart'),
-        content: const Text('Are you sure you want to remove all items from your cart?'),
+        content: const Text(
+          'Are you sure you want to remove all items from your cart?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
@@ -293,9 +337,108 @@ class CartScreen extends StatelessWidget {
               cart.clearCart();
               Navigator.of(dialogCtx).pop();
             },
-            child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Clear',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLoginRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: AppColors.surface,
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_outline_rounded,
+                color: AppColors.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Sign In Required',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'You are browsing as a guest. Please sign in or create an account to proceed with checkout.',
+              style: TextStyle(
+                fontSize: 13.5,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                  if (Get.isRegistered<NavigationController>()) {
+                    NavigationController.to.toLoginModal();
+                  } else {
+                    Get.toNamed(AppRoutes.login);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Sign In',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+                child: const Text(
+                  'Continue Browsing',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
-/// Loading indicator view
+// Loading indicator
 class LoadingView extends StatelessWidget {
   final String message;
 
-  const LoadingView({
-    super.key,
-    this.message = 'Loading products...',
-  });
+  const LoadingView({super.key, this.message = 'Loading products...'});
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +43,7 @@ class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const ErrorView({
-    super.key,
-    required this.message,
-    required this.onRetry,
-  });
+  const ErrorView({super.key, required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +93,10 @@ class ErrorView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -114,14 +110,12 @@ class ErrorView extends StatelessWidget {
   }
 }
 
-/// Empty state view (protected against keyboard & landscape overflow)
 class EmptyView extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final VoidCallback? onAction;
   final String? actionLabel;
-
   const EmptyView({
     super.key,
     this.title = 'No Products Found',

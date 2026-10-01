@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:provider/provider.dart'
 import '../controllers/auth_controller.dart';
 import '../controllers/favorites_controller.dart';
 import '../core/constants/app_colors.dart';
+import '../models/category_model.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/category_list_provider.dart';
@@ -57,8 +59,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
 
-    // Load next page when reaching 200px before end
-    if (currentScroll >= (maxScroll - 200)) {
+    // Load next page when reaching 300px before end or at bottom
+    if (currentScroll >= (maxScroll - 300)) {
       ref.read(productListNotifierProvider.notifier).loadMore();
     }
   }
@@ -93,6 +95,177 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         break;
     }
     return list;
+  }
+
+  Widget _buildGlassSortDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.border.withValues(alpha: 0.9),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: PopupMenuButton<SortOption>(
+            initialValue: _selectedSort,
+            onSelected: (option) {
+              setState(() => _selectedSort = option);
+            },
+            position: PopupMenuPosition.under,
+            offset: const Offset(0, 8),
+            elevation: 6,
+            shadowColor: Colors.black.withValues(alpha: 0.12),
+            color: AppColors.surface.withValues(alpha: 0.95),
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.85),
+                width: 1.0,
+              ),
+            ),
+            padding: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.sort_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _selectedSort.label,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+            itemBuilder: (context) => SortOption.values.map((option) {
+              final isSelected = _selectedSort == option;
+              return PopupMenuItem<SortOption>(
+                value: option,
+                height: 42,
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      size: 16,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        option.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixedHeader({
+    required List<CategoryModel> categories,
+    required String? selectedCategorySlug,
+    required List<ProductModel> products,
+    required bool isLoadingInitial,
+    required bool hasInitialError,
+  }) {
+    return Container(
+      color: AppColors.background,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Search Input Field
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 4),
+            child: ProductSearchBar(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              onClear: _onClearSearch,
+            ),
+          ),
+
+          // 2. Horizontal Categories Selector (Filters)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: CategorySelector(
+              categories: categories,
+              selectedSlug: selectedCategorySlug,
+              onSelectCategory: (slug) {
+                _searchController.clear();
+                ref
+                    .read(productListNotifierProvider.notifier)
+                    .setCategory(slug);
+              },
+            ),
+          ),
+
+          // 3. Count & Sort Bar (Pagination count and Sort)
+          if (!isLoadingInitial && !hasInitialError && products.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${products.length} Products',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  _buildGlassSortDropdown(),
+                ],
+              ),
+            ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
   }
 
   void _showUserMenu(
@@ -231,6 +404,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       productListNotifierProvider.select((state) => state.isLoadingMore),
     );
 
+    final hasNextPage = ref.watch(
+      productListNotifierProvider.select((state) => state.hasNextPage),
+    );
+
     final selectedCategorySlug = ref.watch(
       productListNotifierProvider.select((state) => state.selectedCategorySlug),
     );
@@ -261,14 +438,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 color: AppColors.textPrimary,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'DummyJSON Store',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -369,211 +538,161 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
-          child: RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              // Use ref.read() for actions
-              await ref.read(productListNotifierProvider.notifier).refresh();
-            },
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // Search Input Field
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 4),
-                    child: ProductSearchBar(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      onClear: _onClearSearch,
-                    ),
-                  ),
-                ),
-
-                // Horizontal Categories Selector
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: CategorySelector(
-                      categories: categories,
-                      selectedSlug: selectedCategorySlug,
-                      onSelectCategory: (slug) {
-                        _searchController.clear();
-                        ref
-                            .read(productListNotifierProvider.notifier)
-                            .setCategory(slug);
-                      },
-                    ),
-                  ),
-                ),
-
-                // Filter & Sort bar
-                if (!isLoadingInitial &&
-                    !hasInitialError &&
-                    products.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${products.length} Products',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          PopupMenuButton<SortOption>(
-                            initialValue: _selectedSort,
-                            onSelected: (option) {
-                              setState(() => _selectedSort = option);
+          child: Column(
+            children: [
+              _buildFixedHeader(
+                categories: categories,
+                selectedCategorySlug: selectedCategorySlug,
+                products: products,
+                isLoadingInitial: isLoadingInitial,
+                hasInitialError: hasInitialError,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async {
+                    // Use ref.read() for actions
+                    await ref
+                        .read(productListNotifierProvider.notifier)
+                        .refresh();
+                  },
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      // Main Content Area
+                      if (isLoadingInitial)
+                        const SliverFillRemaining(
+                          child: LoadingView(message: 'Fetching products...'),
+                        )
+                      else if (hasInitialError)
+                        SliverFillRemaining(
+                          child: ErrorView(
+                            message:
+                                errorMessage ?? 'An unexpected error occurred.',
+                            onRetry: () {
+                              ref
+                                  .read(productListNotifierProvider.notifier)
+                                  .loadProducts(reset: true);
                             },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.sort_rounded,
-                                  size: 18,
-                                  color: AppColors.primary,
+                          ),
+                        )
+                      else if (products.isEmpty)
+                        SliverFillRemaining(
+                          child: EmptyView(
+                            title: 'No Products Found',
+                            subtitle: searchQuery.isNotEmpty
+                                ? 'No results matched "$searchQuery". Try another keyword.'
+                                : 'No products in this category yet.',
+                            actionLabel: 'Reset Filters',
+                            onAction: () {
+                              _searchController.clear();
+                              ref
+                                  .read(productListNotifierProvider.notifier)
+                                  .clearFilters();
+                            },
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          sliver: SliverGrid(
+                            gridDelegate:
+                                SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 220,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio:
+                                      (0.63 /
+                                              MediaQuery.textScalerOf(
+                                                context,
+                                              ).scale(1.0))
+                                          .clamp(0.54, 0.70),
                                 ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Sort',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final product = sortedProducts[index];
+                              return ProductCard(
+                                product: product,
+                                onTap: () {
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).clearSnackBars();
+                                  NavigationController.to.toProductDetail(
+                                    product.id,
+                                    initialProduct: product,
+                                  );
+                                },
+                                onAddToCart: () {
+                                  context.read<CartProvider>().addItem(product);
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
+                                  messenger.hideCurrentSnackBar();
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '${product.title} added to cart!',
+                                      ),
+                                      duration: const Duration(seconds: 1),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
+                              );
+                            }, childCount: sortedProducts.length),
+                          ),
+                        ),
+
+                      // Pagination Loading Indicator
+                      if (isLoadingMore)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.primary,
                                   ),
                                 ),
-                              ],
-                            ),
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: SortOption.featured,
-                                child: Text('Featured'),
                               ),
-                              const PopupMenuItem(
-                                value: SortOption.priceLowToHigh,
-                                child: Text('Price: Low to High'),
-                              ),
-                              const PopupMenuItem(
-                                value: SortOption.priceHighToLow,
-                                child: Text('Price: High to Low'),
-                              ),
-                              const PopupMenuItem(
-                                value: SortOption.ratingHighToLow,
-                                child: Text('Highest Rated'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Main Content Area
-                if (isLoadingInitial)
-                  const SliverFillRemaining(
-                    child: LoadingView(message: 'Fetching products...'),
-                  )
-                else if (hasInitialError)
-                  SliverFillRemaining(
-                    child: ErrorView(
-                      message: errorMessage ?? 'An unexpected error occurred.',
-                      onRetry: () {
-                        ref
-                            .read(productListNotifierProvider.notifier)
-                            .loadProducts(reset: true);
-                      },
-                    ),
-                  )
-                else if (products.isEmpty)
-                  SliverFillRemaining(
-                    child: EmptyView(
-                      title: 'No Products Found',
-                      subtitle: searchQuery.isNotEmpty
-                          ? 'No results matched "$searchQuery". Try another keyword.'
-                          : 'No products in this category yet.',
-                      actionLabel: 'Reset Filters',
-                      onAction: () {
-                        _searchController.clear();
-                        ref
-                            .read(productListNotifierProvider.notifier)
-                            .clearFilters();
-                      },
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 220,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio:
-                            (0.63 / MediaQuery.textScalerOf(context).scale(1.0))
-                                .clamp(0.54, 0.70),
-                      ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final product = sortedProducts[index];
-                        return ProductCard(
-                          product: product,
-                          onTap: () {
-                            NavigationController.to.toProductDetail(
-                              product.id,
-                              initialProduct: product,
-                            );
-                          },
-                          onAddToCart: () {
-                            context.read<CartProvider>().addItem(product);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${product.title} added to cart!',
-                                ),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        );
-                      }, childCount: sortedProducts.length),
-                    ),
-                  ),
-
-                // Pagination Loading Indicator
-                if (isLoadingMore)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
                             ),
                           ),
                         ),
-                      ),
-                    ),
+
+                      // End of Catalog indicator
+                      if (!isLoadingMore &&
+                          !hasNextPage &&
+                          sortedProducts.isNotEmpty)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: Text(
+                                'You have reached the end of the catalog',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

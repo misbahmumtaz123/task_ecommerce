@@ -8,7 +8,7 @@ class AuthController extends GetxController {
   final AuthRepository _authRepository;
 
   AuthController({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepositoryImpl();
+    : _authRepository = authRepository ?? AuthRepositoryImpl();
 
   // Reactive state
   final Rxn<UserModel> _currentUser = Rxn<UserModel>();
@@ -38,7 +38,10 @@ class AuthController extends GetxController {
   }
 
   /// Autofill demo credentials for testing DummyJSON authentication
-  void fillDemoCredentials(TextEditingController usernameController, TextEditingController passwordController) {
+  void fillDemoCredentials(
+    TextEditingController usernameController,
+    TextEditingController passwordController,
+  ) {
     usernameController.text = 'emilys';
     passwordController.text = 'emilyspass';
     clearError();

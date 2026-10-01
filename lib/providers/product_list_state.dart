@@ -24,34 +24,40 @@ class ProductListState {
     this.errorMessage,
     this.hasNextPage = true,
     this.skip = 0,
-    this.limit = 30,
+    this.limit = 6,
     this.searchQuery = '',
     this.selectedCategorySlug,
   });
+
+  static const Object _sentinel = Object();
 
   ProductListState copyWith({
     List<ProductModel>? products,
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasError,
-    String? errorMessage,
+    Object? errorMessage = _sentinel,
     bool? hasNextPage,
     int? skip,
     int? limit,
     String? searchQuery,
-    String? selectedCategorySlug,
+    Object? selectedCategorySlug = _sentinel,
   }) {
     return ProductListState(
       products: products ?? this.products,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasError: hasError ?? this.hasError,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _sentinel)
+          ? this.errorMessage
+          : errorMessage as String?,
       hasNextPage: hasNextPage ?? this.hasNextPage,
       skip: skip ?? this.skip,
       limit: limit ?? this.limit,
       searchQuery: searchQuery ?? this.searchQuery,
-      selectedCategorySlug: selectedCategorySlug ?? this.selectedCategorySlug,
+      selectedCategorySlug: identical(selectedCategorySlug, _sentinel)
+          ? this.selectedCategorySlug
+          : selectedCategorySlug as String?,
     );
   }
 

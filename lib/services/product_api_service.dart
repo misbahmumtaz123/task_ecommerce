@@ -2,10 +2,9 @@ import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
 import '../models/pagination_query_model.dart';
 
-/// Contract for Product API operations
 abstract class ProductApiService {
   Future<Map<String, dynamic>> fetchProducts({
-    int limit = 30,
+    int limit = 6,
     int skip = 0,
     PaginationQuery? pagination,
   });
@@ -23,7 +22,7 @@ class ProductApiServiceImpl implements ProductApiService {
 
   @override
   Future<Map<String, dynamic>> fetchProducts({
-    int limit = 30,
+    int limit = 6,
     int skip = 0,
     PaginationQuery? pagination,
   }) async {
@@ -47,7 +46,9 @@ class ProductApiServiceImpl implements ProductApiService {
   }
 
   @override
-  Future<Map<String, dynamic>> fetchProductsByCategory(String categorySlug) async {
+  Future<Map<String, dynamic>> fetchProductsByCategory(
+    String categorySlug,
+  ) async {
     final response = await _client.get(
       '${ApiConstants.categoryProducts}/$categorySlug',
     );

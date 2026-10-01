@@ -9,7 +9,7 @@ import '../services/product_api_service.dart';
 /// Contract defining data operations for Products
 abstract class ProductRepository {
   Future<Result<ProductResponseModel>> getProducts({
-    int limit = 30,
+    int limit = 6,
     int skip = 0,
     PaginationQuery? pagination,
   });
@@ -28,7 +28,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<Result<ProductResponseModel>> getProducts({
-    int limit = 30,
+    int limit = 6,
     int skip = 0,
     PaginationQuery? pagination,
   }) async {

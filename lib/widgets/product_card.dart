@@ -5,14 +5,10 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/currency_formatter.dart';
 import '../models/product_model.dart';
 
-/// Reusable responsive product card widget displayed in catalog grids.
-/// Fully guarded against layout and RenderFlex overflow errors across all screen sizes.
-/// Supports native touch ripple feedback, cursor hover, and independent action taps.
 class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
   final VoidCallback onAddToCart;
-
   const ProductCard({
     super.key,
     required this.product,
@@ -47,7 +43,6 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image, discount tag, and favorite icon
               Expanded(
                 flex: 10,
                 child: Stack(
@@ -58,15 +53,22 @@ class ProductCard extends StatelessWidget {
                       child: Image.network(
                         product.thumbnail,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Center(
-                          child: Icon(Icons.broken_image_rounded, color: AppColors.textMuted, size: 32),
-                        ),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                              child: Icon(
+                                Icons.broken_image_rounded,
+                                color: AppColors.textMuted,
+                                size: 32,
+                              ),
+                            ),
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return const Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
                             ),
                           );
                         },
@@ -77,7 +79,10 @@ class ProductCard extends StatelessWidget {
                         top: 8,
                         left: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.secondary,
                             borderRadius: BorderRadius.circular(6),
@@ -97,14 +102,18 @@ class ProductCard extends StatelessWidget {
                       top: 6,
                       right: 6,
                       child: Obx(() {
-                        final favoritesController = Get.isRegistered<FavoritesController>()
+                        final favoritesController =
+                            Get.isRegistered<FavoritesController>()
                             ? Get.find<FavoritesController>()
                             : null;
-                        final isFav = favoritesController?.isFavorite(product.id) ?? false;
+                        final isFav =
+                            favoritesController?.isFavorite(product.id) ??
+                            false;
                         return Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: () => favoritesController?.toggleFavorite(product),
+                            onTap: () =>
+                                favoritesController?.toggleFavorite(product),
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
                               padding: const EdgeInsets.all(5),
@@ -120,9 +129,13 @@ class ProductCard extends StatelessWidget {
                                 ],
                               ),
                               child: Icon(
-                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                isFav
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
                                 size: 16,
-                                color: isFav ? AppColors.error : AppColors.textMuted,
+                                color: isFav
+                                    ? AppColors.error
+                                    : AppColors.textMuted,
                               ),
                             ),
                           ),
@@ -137,7 +150,10 @@ class ProductCard extends StatelessWidget {
               Expanded(
                 flex: 12,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -181,7 +197,11 @@ class ProductCard extends StatelessWidget {
                           // Rating & Stock
                           Row(
                             children: [
-                              const Icon(Icons.star_rounded, size: 13, color: AppColors.accent),
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 13,
+                                color: AppColors.accent,
+                              ),
                               const SizedBox(width: 2),
                               Text(
                                 product.rating.toStringAsFixed(1),
@@ -194,13 +214,17 @@ class ProductCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  product.stock > 0 ? 'In Stock' : 'Out of stock',
+                                  product.stock > 0
+                                      ? 'In Stock'
+                                      : 'Out of stock',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.end,
                                   style: TextStyle(
                                     fontSize: 9.5,
-                                    color: product.stock > 0 ? AppColors.success : AppColors.error,
+                                    color: product.stock > 0
+                                        ? AppColors.success
+                                        : AppColors.error,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -231,13 +255,16 @@ class ProductCard extends StatelessWidget {
                                     ),
                                     if (product.discountPercentage > 0)
                                       Text(
-                                        CurrencyFormatter.format(product.originalPrice),
+                                        CurrencyFormatter.format(
+                                          product.originalPrice,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 9.5,
                                           color: AppColors.textMuted,
-                                          decoration: TextDecoration.lineThrough,
+                                          decoration:
+                                              TextDecoration.lineThrough,
                                         ),
                                       ),
                                   ],

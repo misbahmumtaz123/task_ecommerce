@@ -4,11 +4,7 @@ class CategoryModel {
   final String name;
   final String? url;
 
-  const CategoryModel({
-    required this.slug,
-    required this.name,
-    this.url,
-  });
+  const CategoryModel({required this.slug, required this.name, this.url});
 
   factory CategoryModel.fromJson(dynamic json) {
     if (json is String) {
@@ -31,9 +27,12 @@ class CategoryModel {
 
   static String _capitalize(String text) {
     if (text.isEmpty) return text;
-    return text.split(' ').map((word) {
-      if (word.isEmpty) return word;
-      return '${word[0].toUpperCase()}${word.substring(1)}';
-    }).join(' ');
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return '${word[0].toUpperCase()}${word.substring(1)}';
+        })
+        .join(' ');
   }
 }

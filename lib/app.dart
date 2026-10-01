@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart' as provider_pkg;
-
 import 'core/bindings/app_binding.dart';
 import 'core/di/app_dependencies.dart';
 import 'core/routing/app_router.dart';
@@ -10,30 +9,18 @@ import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
 import 'repositories/product_repository.dart';
 
-/// Root UI, Theme, and MultiProvider configuration for the application.
-/// Extracted out of main.dart to ensure clean architecture and separation of concerns.
 class EcommerceApp extends StatelessWidget {
   final AppDependencies? dependencies;
   final Widget? home;
-
-  const EcommerceApp({
-    super.key,
-    this.dependencies,
-    this.home,
-  });
-
+  const EcommerceApp({super.key, this.dependencies, this.home});
   @override
   Widget build(BuildContext context) {
     final deps = dependencies ?? AppDependencies.init();
-
     return provider_pkg.MultiProvider(
       providers: [
-        // Repository provider for access across widget tree
         provider_pkg.Provider<ProductRepository>.value(
           value: deps.productRepository,
         ),
-
-        // State Management providers
         provider_pkg.ChangeNotifierProvider<ProductProvider>(
           create: (_) => ProductProvider(repository: deps.productRepository),
         ),
@@ -42,7 +29,7 @@ class EcommerceApp extends StatelessWidget {
         ),
       ],
       child: GetMaterialApp(
-        title: 'DummyJSON Store',
+        title: 'Store',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         initialBinding: AppBinding(),

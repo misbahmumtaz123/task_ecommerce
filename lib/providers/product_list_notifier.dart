@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/result.dart';
+import '../models/pagination_query_model.dart';
 import '../models/product_response_model.dart';
 import '../repositories/product_repository.dart';
 import 'category_list_provider.dart';
@@ -58,7 +59,15 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
     } else if (category != null && category.isNotEmpty) {
       result = await _repository.getProductsByCategory(category);
     } else {
-      result = await _repository.getProducts(limit: state.limit, skip: currentSkip);
+      final pageQuery = PaginationQuery(
+        pageSize: state.limit,
+        page: (currentSkip ~/ state.limit) + 1,
+      );
+      result = await _repository.getProducts(
+        limit: state.limit,
+        skip: currentSkip,
+        pagination: pageQuery,
+      );
     }
 
     result.when(
@@ -68,7 +77,7 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
             : [...state.products, ...response.products];
 
         final bool hasMore = (query.isEmpty && (category == null || category.isEmpty))
-            ? (newProducts.length < response.total && response.products.isNotEmpty)
+            ? response.hasMore
             : false;
 
         state = state.copyWith(
@@ -98,15 +107,21 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
 
     state = state.copyWith(isLoadingMore: true);
 
+    final pageQuery = PaginationQuery(
+      pageSize: state.limit,
+      page: (state.skip ~/ state.limit) + 1,
+    );
+
     final result = await _repository.getProducts(
       limit: state.limit,
       skip: state.skip,
+      pagination: pageQuery,
     );
 
     result.when(
       success: (response) {
         final combined = [...state.products, ...response.products];
-        final bool hasMore = combined.length < response.total && response.products.isNotEmpty;
+        final bool hasMore = response.hasMore;
 
         state = state.copyWith(
           products: combined,
@@ -118,7 +133,6 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
       failure: (exception) {
         state = state.copyWith(
           isLoadingMore: false,
-          // Don't wipe existing products on loadMore failure, just stop spinner
         );
       },
     );
@@ -141,9 +155,11 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
 
   /// Updates selected category filter
   void setCategory(String? slug) {
-    if (state.selectedCategorySlug == slug && state.searchQuery.isEmpty) return;
+    final effectiveSlug =
+        (slug != null && slug.trim().isNotEmpty) ? slug.trim() : null;
+    if (state.selectedCategorySlug == effectiveSlug && state.searchQuery.isEmpty) return;
     state = state.copyWith(
-      selectedCategorySlug: slug,
+      selectedCategorySlug: effectiveSlug,
       searchQuery: '',
     );
     loadProducts(reset: true);

@@ -23,7 +23,7 @@ class ProductResponseModel {
           .toList(),
       total: (json['total'] as num?)?.toInt() ?? 0,
       skip: (json['skip'] as num?)?.toInt() ?? 0,
-      limit: (json['limit'] as num?)?.toInt() ?? 10,
+      limit: (json['limit'] as num?)?.toInt() ?? 6,
     );
   }
 

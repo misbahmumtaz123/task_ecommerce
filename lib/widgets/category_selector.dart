@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../models/category_model.dart';
 
-/// Horizontal category filter chip selector
+//Horizontal category filter
 class CategorySelector extends StatelessWidget {
   final List<CategoryModel> categories;
   final String? selectedSlug;
   final ValueChanged<String?> onSelectCategory;
-
   const CategorySelector({
     super.key,
     required this.categories,
@@ -26,7 +25,7 @@ class CategorySelector extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           if (index == 0) {
-            final isSelected = selectedSlug == null;
+            final isSelected = selectedSlug == null || selectedSlug!.isEmpty;
             return _buildChip(
               label: 'All',
               isSelected: isSelected,
@@ -35,7 +34,8 @@ class CategorySelector extends StatelessWidget {
           }
 
           final category = categories[index - 1];
-          final isSelected = selectedSlug == category.slug;
+          final isSelected =
+              selectedSlug != null && selectedSlug == category.slug;
 
           return _buildChip(
             label: category.name,
@@ -53,6 +53,7 @@ class CategorySelector extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

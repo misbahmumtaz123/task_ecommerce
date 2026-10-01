@@ -1,6 +1,6 @@
 /// Defines sorting options for the product catalog
 enum SortOption {
-  featured('Featured'),
+  featured('Sort'),
   priceLowToHigh('Price: Low to High'),
   priceHighToLow('Price: High to Low'),
   ratingHighToLow('Customer Rating');

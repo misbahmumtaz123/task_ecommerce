@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controllers/auth_controller.dart';
-import '../controllers/register_controller.dart';
-import '../core/constants/app_colors.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/register_controller.dart';
+import '../../core/constants/app_colors.dart';
 
 /// User Registration Screen connected with DummyJSON `/users/add`
 /// Clean Stateless Architecture with reactive state managed by [RegisterController] & [AuthController].
@@ -21,7 +21,11 @@ class RegisterScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
           onPressed: registerController.backToLogin,
         ),
         title: const Text(
@@ -45,7 +49,7 @@ class RegisterScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Join AuraStore ✨',
+                      'Join AuraStore',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -79,9 +83,13 @@ class RegisterScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               TextFormField(
-                                controller: registerController.firstNameController,
+                                controller:
+                                    registerController.firstNameController,
                                 decoration: _buildInputDecoration('First name'),
-                                validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                                validator: (val) =>
+                                    val == null || val.trim().isEmpty
+                                    ? 'Required'
+                                    : null,
                               ),
                             ],
                           ),
@@ -101,9 +109,13 @@ class RegisterScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               TextFormField(
-                                controller: registerController.lastNameController,
+                                controller:
+                                    registerController.lastNameController,
                                 decoration: _buildInputDecoration('Last name'),
-                                validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                                validator: (val) =>
+                                    val == null || val.trim().isEmpty
+                                    ? 'Required'
+                                    : null,
                               ),
                             ],
                           ),
@@ -124,8 +136,13 @@ class RegisterScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: registerController.usernameController,
-                      decoration: _buildInputDecoration('Choose a unique username', prefixIcon: Icons.person_outline_rounded),
-                      validator: (val) => val == null || val.trim().isEmpty ? 'Username is required' : null,
+                      decoration: _buildInputDecoration(
+                        'Choose a unique username',
+                        prefixIcon: Icons.person_outline_rounded,
+                      ),
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'Username is required'
+                          : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -142,10 +159,17 @@ class RegisterScreen extends StatelessWidget {
                     TextFormField(
                       controller: registerController.emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: _buildInputDecoration('your.email@example.com', prefixIcon: Icons.email_outlined),
+                      decoration: _buildInputDecoration(
+                        'your.email@example.com',
+                        prefixIcon: Icons.email_outlined,
+                      ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Email is required';
-                        if (!val.contains('@')) return 'Enter a valid email';
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!val.contains('@')) {
+                          return 'Enter a valid email';
+                        }
                         return null;
                       },
                     ),
@@ -170,7 +194,9 @@ class RegisterScreen extends StatelessWidget {
                           prefixIcon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             icon: Icon(
-                              authController.obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              authController.obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: AppColors.textSecondary,
                               size: 20,
                             ),
@@ -178,8 +204,12 @@ class RegisterScreen extends StatelessWidget {
                           ),
                         ),
                         validator: (val) {
-                          if (val == null || val.trim().isEmpty) return 'Password is required';
-                          if (val.length < 6) return 'Must be at least 6 characters';
+                          if (val == null || val.trim().isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (val.length < 6) {
+                            return 'Must be at least 6 characters';
+                          }
                           return null;
                         },
                       );
@@ -189,21 +219,28 @@ class RegisterScreen extends StatelessWidget {
                     // Terms agreement
                     Row(
                       children: [
-                        Obx(() => SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: registerController.agreeTerms.value,
-                                activeColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                onChanged: registerController.toggleAgreeTerms,
+                        Obx(
+                          () => SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: registerController.agreeTerms.value,
+                              activeColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                            )),
+                              onChanged: registerController.toggleAgreeTerms,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
                             'I agree to the Terms of Service & Privacy Policy',
-                            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
@@ -216,7 +253,9 @@ class RegisterScreen extends StatelessWidget {
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : registerController.handleRegister,
+                          onPressed: isLoading
+                              ? null
+                              : registerController.handleRegister,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -232,7 +271,9 @@ class RegisterScreen extends StatelessWidget {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -282,11 +323,17 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  InputDecoration _buildInputDecoration(String hint, {IconData? prefixIcon, Widget? suffixIcon}) {
+  InputDecoration _buildInputDecoration(
+    String hint, {
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13.5),
-      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20) : null,
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+          : null,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.surface,

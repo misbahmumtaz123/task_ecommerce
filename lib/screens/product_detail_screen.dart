@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-
-import '../controllers/detail_controller.dart';
 import '../controllers/favorites_controller.dart';
-import '../controllers/navigation_controller.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/currency_formatter.dart';
 import '../models/product_model.dart';
@@ -16,9 +13,9 @@ import 'cart_screen.dart';
 /// Screen displaying complete product specifications, interactive gallery,
 /// customer reviews, stock details, and quantity-aware cart controls.
 ///
-/// Architecture: Clean StatelessWidget with reactive Obx state management via [DetailController].
-/// Eliminates screen-level setState rebuilds and decouples UI from data fetching logic.
-class ProductDetailScreen extends StatelessWidget {
+/// Architecture: Uses local StatefulWidget state to manage loading/product data.
+/// This avoids all GetX singleton stale-state issues that caused the blank screen.
+class ProductDetailScreen extends StatefulWidget {
   final int productId;
   final ProductModel? initialProduct;
 
@@ -29,93 +26,237 @@ class ProductDetailScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final detailController = Get.isRegistered<DetailController>()
-        ? Get.find<DetailController>()
-        : Get.put(DetailController(
-            Get.isRegistered<ProductRepository>()
-                ? Get.find<ProductRepository>()
-                : ProductRepositoryImpl(),
-          ));
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
 
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  ProductRepository? _repository;
+
+  // --- Local state: reactive within this screen ---
+  ProductModel? _product;
+  bool _isLoading = false;
+  String? _errorMessage;
+  int _selectedImageIndex = 0;
+  int _selectedQuantity = 1;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+
+    // Show initial product immediately (prevents blank flash)
+    if (widget.initialProduct != null) {
+      _product = widget.initialProduct;
+    } else {
+      _isLoading = true;
+    }
+    _selectedQuantity = 1;
+
+    // Always fetch fresh full details from API in background after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchProduct();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_repository == null) {
+      try {
+        _repository = context.read<ProductRepository>();
+      } catch (_) {
+        _repository = ProductRepositoryImpl();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchProduct() async {
+    final repo = _repository ?? ProductRepositoryImpl();
+    final result = await repo.getProductById(widget.productId);
+    if (!mounted) return;
+
+    result.when(
+      success: (data) {
+        setState(() {
+          _product = data;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      },
+      failure: (exception) {
+        setState(() {
+          _isLoading = false;
+          // Only set error if we have no fallback to show
+          if (_product == null) {
+            _errorMessage = exception.message;
+          }
+        });
+      },
+    );
+  }
+
+  List<String> _buildImageList() {
+    if (_product == null) return [];
+    final images = <String>[];
+    for (final img in _product!.images) {
+      final clean = img.trim();
+      if (clean.isNotEmpty && !images.contains(clean)) {
+        images.add(clean);
+      }
+    }
+    final thumb = _product!.thumbnail.trim();
+    if (thumb.isNotEmpty && !images.contains(thumb)) {
+      images.add(thumb);
+    }
+    return images;
+  }
+
+  void _incrementQuantity() {
+    final maxStock = _product?.stock ?? 1;
+    if (_selectedQuantity < maxStock && _selectedQuantity < 99) {
+      setState(() => _selectedQuantity++);
+    }
+  }
+
+  void _decrementQuantity() {
+    if (_selectedQuantity > 1) {
+      setState(() => _selectedQuantity--);
+    }
+  }
+
+  void _openImageZoom(String imageUrl) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return const SizedBox(
+                        height: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.broken_image_rounded,
+                      size: 80,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton.filled(
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.6)),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final favoritesController = Get.isRegistered<FavoritesController>()
         ? Get.find<FavoritesController>()
         : Get.put(FavoritesController(), permanent: true);
 
-    // Initial load trigger without invoking async state modification during build cycle
-    if (detailController.product?.id != productId && !detailController.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        detailController.prepareForProduct(productId, initialProduct: initialProduct);
-        detailController.fetchProduct(productId, fallbackProduct: initialProduct);
-      });
-    }
+    final images = _buildImageList();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary, size: 20),
-          onPressed: () {
-            if (Get.isRegistered<NavigationController>()) {
-              Get.find<NavigationController>().back();
-            } else {
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textPrimary, size: 20),
+            onPressed: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
               Navigator.of(context).pop();
-            }
-          },
-        ),
-        title: Obx(() {
-          final p = detailController.product;
-          return Text(
-            p != null ? p.category.toUpperCase() : 'PRODUCT DETAILS',
+            },
+          ),
+          title: Text(
+            _product != null
+                ? _product!.category.toUpperCase()
+                : 'PRODUCT DETAILS',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
-          );
-        }),
-        actions: [
-          Obx(() {
-            final isFav = favoritesController.isFavorite(productId);
-            return IconButton(
-              icon: Icon(
-                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: isFav ? AppColors.error : AppColors.textPrimary,
-              ),
+          ),
+          actions: [
+            Obx(() {
+              final isFav = favoritesController.isFavorite(widget.productId);
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isFav ? AppColors.error : AppColors.textPrimary,
+                ),
+                onPressed: () {
+                  if (_product != null) {
+                    favoritesController.toggleFavorite(_product!);
+                  }
+                },
+              );
+            }),
+            CartBadgeButton(
               onPressed: () {
-                final p = detailController.product;
-                if (p != null) {
-                  favoritesController.toggleFavorite(p);
-                }
-              },
-            );
-          }),
-          CartBadgeButton(
-            onPressed: () {
-              if (Get.isRegistered<NavigationController>()) {
-                Get.find<NavigationController>().toCart(context);
-              } else {
+                ScaffoldMessenger.of(context).clearSnackBars();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 );
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: _buildBody(images),
+        bottomNavigationBar: _buildBottomBar(),
       ),
-      body: Obx(() => _buildBody(context, detailController)),
-      bottomNavigationBar: Obx(() => _buildBottomBar(context, detailController)),
     );
   }
 
-  Widget _buildBody(BuildContext context, DetailController controller) {
+  Widget _buildBody(List<String> images) {
     // Show loading spinner only when we have NO product to show yet
-    if (controller.isLoading && controller.product == null) {
+    if (_isLoading && _product == null) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -134,7 +275,7 @@ class ProductDetailScreen extends StatelessWidget {
     }
 
     // Show error only if we have no product fallback
-    if (controller.errorMessage.isNotEmpty && controller.product == null) {
+    if (_errorMessage != null && _product == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -144,13 +285,19 @@ class ProductDetailScreen extends StatelessWidget {
               const Icon(Icons.wifi_off_rounded,
                   size: 56, color: AppColors.error),
               const SizedBox(height: 16),
-              Text(controller.errorMessage,
+              Text(_errorMessage!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 14)),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                onPressed: () => controller.fetchProduct(productId),
+                onPressed: () {
+                  setState(() {
+                    _errorMessage = null;
+                    _isLoading = true;
+                  });
+                  _fetchProduct();
+                },
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
@@ -163,8 +310,7 @@ class ProductDetailScreen extends StatelessWidget {
       );
     }
 
-    final product = controller.product;
-    if (product == null) {
+    if (_product == null) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -197,11 +343,11 @@ class ProductDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildGallery(context, controller, galleryHeight),
+              _buildGallery(images, galleryHeight),
               const SizedBox(height: 20),
-              _buildProductInfo(product),
+              _buildProductInfo(),
               const SizedBox(height: 24),
-              _buildReviewsSection(product),
+              _buildReviewsSection(),
               const SizedBox(height: 24),
             ],
           ),
@@ -210,13 +356,10 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGallery(
-      BuildContext context, DetailController controller, double height) {
-    final images = controller.imageList;
-    final product = controller.product;
-
+  Widget _buildGallery(List<String> images, double height) {
     if (images.isEmpty) {
-      final thumb = product?.thumbnail ?? '';
+      // Show a thumbnail fallback or placeholder
+      final thumb = _product?.thumbnail ?? '';
       return Container(
         height: height,
         width: double.infinity,
@@ -244,10 +387,6 @@ class ProductDetailScreen extends StatelessWidget {
       );
     }
 
-    final pageController = PageController(
-      initialPage: controller.selectedImageIndex.clamp(0, images.length - 1),
-    );
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -272,12 +411,14 @@ class ProductDetailScreen extends StatelessWidget {
             child: Stack(
               children: [
                 PageView.builder(
-                  controller: pageController,
+                  controller: _pageController,
                   itemCount: images.length,
-                  onPageChanged: controller.setSelectedImageIndex,
+                  onPageChanged: (index) {
+                    setState(() => _selectedImageIndex = index);
+                  },
                   itemBuilder: (_, i) {
                     return GestureDetector(
-                      onTap: () => controller.openImageZoom(context, images[i]),
+                      onTap: () => _openImageZoom(images[i]),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Image.network(
@@ -298,7 +439,9 @@ class ProductDetailScreen extends StatelessWidget {
                             );
                           },
                           errorBuilder: (_, _, _) {
-                            final thumb = product?.thumbnail.trim() ?? '';
+                            // fallback to thumbnail
+                            final thumb =
+                                _product?.thumbnail.trim() ?? '';
                             if (thumb.isNotEmpty && images[i] != thumb) {
                               return Image.network(thumb,
                                   fit: BoxFit.contain,
@@ -333,7 +476,7 @@ class ProductDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${controller.selectedImageIndex + 1} / ${images.length}',
+                        '${_selectedImageIndex + 1} / ${images.length}',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -351,8 +494,7 @@ class ProductDetailScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(images.length, (i) {
-                        final isCurrent =
-                            i == controller.selectedImageIndex;
+                        final isCurrent = i == _selectedImageIndex;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -382,15 +524,13 @@ class ProductDetailScreen extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   itemCount: images.length,
                   itemBuilder: (_, i) {
-                    final isSelected = i == controller.selectedImageIndex;
+                    final isSelected = i == _selectedImageIndex;
                     return GestureDetector(
                       onTap: () {
-                        controller.setSelectedImageIndex(i);
-                        if (pageController.hasClients) {
-                          pageController.animateToPage(i,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut);
-                        }
+                        setState(() => _selectedImageIndex = i);
+                        _pageController.animateToPage(i,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut);
                       },
                       child: Container(
                         width: 52,
@@ -429,7 +569,8 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductInfo(ProductModel product) {
+  Widget _buildProductInfo() {
+    final product = _product!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -604,37 +745,6 @@ class ProductDetailScreen extends StatelessWidget {
             value: product.returnPolicy ?? '30 Days Return',
           ),
         ]),
-        if (product.weight != null ||
-            product.dimensions?.hasDimensions == true) ...[
-          const SizedBox(height: 12),
-          _specRow([
-            if (product.weight != null)
-              _SpecData(
-                  icon: Icons.scale_rounded,
-                  title: 'Weight',
-                  value: '${product.weight} g'),
-            if (product.dimensions?.hasDimensions == true)
-              _SpecData(
-                  icon: Icons.straighten_rounded,
-                  title: 'Dimensions',
-                  value: product.dimensions!.formatted),
-          ]),
-        ],
-        if (product.sku != null || product.minimumOrderQuantity != null) ...[
-          const SizedBox(height: 12),
-          _specRow([
-            if (product.sku != null)
-              _SpecData(
-                  icon: Icons.qr_code_rounded,
-                  title: 'SKU',
-                  value: product.sku!),
-            if (product.minimumOrderQuantity != null)
-              _SpecData(
-                  icon: Icons.shopping_basket_outlined,
-                  title: 'Min. Order',
-                  value: '${product.minimumOrderQuantity} units'),
-          ]),
-        ],
       ],
     );
   }
@@ -708,7 +818,8 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewsSection(ProductModel product) {
+  Widget _buildReviewsSection() {
+    final product = _product!;
     if (product.reviews.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -823,12 +934,12 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, DetailController controller) {
-    final product = controller.product;
-    if (product == null) return const SizedBox.shrink();
+  Widget _buildBottomBar() {
+    if (_product == null) return const SizedBox.shrink();
 
+    final product = _product!;
     final maxStock = product.stock > 0 ? product.stock : 1;
-    final selectedQty = controller.selectedQuantity;
+    final totalPrice = product.price * _selectedQuantity;
 
     return Container(
       decoration: BoxDecoration(
@@ -865,18 +976,18 @@ class ProductDetailScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove, size: 18),
-                          color: selectedQty > 1
+                          color: _selectedQuantity > 1
                               ? AppColors.textPrimary
                               : AppColors.textMuted,
                           padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(
                               minWidth: 36, minHeight: 36),
-                          onPressed: controller.decrementQuantity,
+                          onPressed: _decrementQuantity,
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
-                            '$selectedQty',
+                            '$_selectedQuantity',
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -885,13 +996,13 @@ class ProductDetailScreen extends StatelessWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.add, size: 18),
-                          color: selectedQty < maxStock
+                          color: _selectedQuantity < maxStock
                               ? AppColors.primary
                               : AppColors.textMuted,
                           padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(
                               minWidth: 36, minHeight: 36),
-                          onPressed: controller.incrementQuantity,
+                          onPressed: _incrementQuantity,
                         ),
                       ],
                     ),
@@ -906,35 +1017,36 @@ class ProductDetailScreen extends StatelessWidget {
                           : () {
                               context
                                   .read<CartProvider>()
-                                  .addItemWithQuantity(product, selectedQty);
-                              ScaffoldMessenger.of(context).showSnackBar(
+                                  .addItemWithQuantity(product, _selectedQuantity);
+                              final messenger = ScaffoldMessenger.of(context);
+                              messenger.hideCurrentSnackBar();
+                              messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      '$selectedQty × ${product.title} added to cart!'),
-                                  duration: const Duration(seconds: 2),
+                                      '$_selectedQuantity × ${product.title} added to cart!'),
+                                  duration: const Duration(milliseconds: 2000),
                                   behavior: SnackBarBehavior.floating,
                                   action: SnackBarAction(
                                     label: 'VIEW CART',
                                     textColor: Colors.amber,
                                     onPressed: () {
-                                      if (Get.isRegistered<NavigationController>()) {
-                                        Get.find<NavigationController>().toCart(context);
-                                      } else {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (_) => const CartScreen()),
-                                        );
-                                      }
+                                      messenger.hideCurrentSnackBar();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (_) => const CartScreen()),
+                                      );
                                     },
                                   ),
                                 ),
                               );
                             },
-                      icon: const Icon(Icons.shopping_bag_outlined, size: 20),
+                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
                       label: Text(
-                        product.stock <= 0
-                            ? 'Out of Stock'
-                            : 'Add to Cart • ${CurrencyFormatter.format(product.price * selectedQty)}',
+                        product.stock > 0
+                            ? 'Add to Cart • ${CurrencyFormatter.format(totalPrice)}'
+                            : 'Out of Stock',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
@@ -943,11 +1055,11 @@ class ProductDetailScreen extends StatelessWidget {
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: AppColors.border,
                         disabledForegroundColor: AppColors.textMuted,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 2,
                       ),
                     ),
                   ),
@@ -960,12 +1072,12 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  static String _formatDate(String isoString) {
+  String _formatDate(String raw) {
     try {
-      final dt = DateTime.parse(isoString);
-      return '${dt.day}/${dt.month}/${dt.year}';
+      final d = DateTime.parse(raw);
+      return '${d.day}/${d.month}/${d.year}';
     } catch (_) {
-      return isoString;
+      return raw;
     }
   }
 }
@@ -975,11 +1087,9 @@ class _SpecData {
   final String title;
   final String value;
   final bool highlight;
-
-  const _SpecData({
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.highlight = false,
-  });
+  const _SpecData(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      this.highlight = false});
 }

@@ -2,10 +2,10 @@ import 'package:get/get.dart';
 import 'app_routes.dart';
 import '../../screens/cart_screen.dart';
 import '../../screens/favorites_screen.dart';
-import '../../screens/login_screen.dart';
+import '../../screens/auth/login_screen.dart';
 import '../../screens/onboarding_screen.dart';
 import '../../screens/product_list_screen.dart';
-import '../../screens/register_screen.dart';
+import '../../screens/auth/register_screen.dart';
 import '../../screens/splash_screen.dart';
 
 /// Application routing map and configuration

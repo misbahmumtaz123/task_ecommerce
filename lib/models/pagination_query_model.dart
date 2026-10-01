@@ -6,7 +6,7 @@ class PaginationQuery {
 
   const PaginationQuery({
     this.page = 1,
-    this.pageSize = 30,
+    this.pageSize = 6,
   }) : assert(page >= 1, 'Page must be greater than or equal to 1'),
        assert(pageSize >= 1, 'PageSize must be greater than or equal to 1');
 
