@@ -10,7 +10,6 @@ import 'providers/cart_provider.dart';
 import 'providers/product_list_notifier.dart';
 import 'providers/product_provider.dart';
 import 'repositories/product_repository.dart';
-import 'screens/product_list_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/product_api_service.dart';
 
@@ -46,7 +45,7 @@ void main() {
             create: (_) => CartProvider(),
           ),
         ],
-        child: const EcommerceApp(home: ProductListScreen()),
+        child: const EcommerceApp(),
       ),
     ),
   );

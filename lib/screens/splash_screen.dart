@@ -44,6 +44,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToNextScreen() {
+    _timer?.cancel();
     if (!mounted) return;
     final authController = Get.find<AuthController>();
 
@@ -65,7 +66,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: GestureDetector(
+        onTap: _navigateToNextScreen,
+        child: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -191,6 +194,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
