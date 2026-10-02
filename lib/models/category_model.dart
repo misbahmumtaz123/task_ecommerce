@@ -1,4 +1,3 @@
-/// Represents a product category from DummyJSON
 class CategoryModel {
   final String slug;
   final String name;

@@ -7,21 +7,15 @@ import 'favorites_controller.dart';
 
 class DetailController extends GetxController {
   final ProductRepository repository;
-
   DetailController(this.repository);
-
   final Rxn<ProductModel> _product = Rxn<ProductModel>();
   ProductModel? get product => _product.value;
-
   final RxBool _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
-
   final RxString _errorMessage = ''.obs;
   String get errorMessage => _errorMessage.value;
-
   final RxInt _selectedImageIndex = 0.obs;
   int get selectedImageIndex => _selectedImageIndex.value;
-
   void setSelectedImageIndex(int index) {
     _selectedImageIndex.value = index;
   }

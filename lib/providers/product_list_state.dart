@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 
-/// State for the product listing feature handled by Riverpod.
-/// It contains the list of products, loading flags, pagination info,
-/// current search query and selected category.
 class ProductListState {
   final List<ProductModel> products;
   final bool isLoading;
@@ -15,7 +12,6 @@ class ProductListState {
   final int limit;
   final String searchQuery;
   final String? selectedCategorySlug;
-
   const ProductListState({
     this.products = const [],
     this.isLoading = false,
@@ -79,15 +75,15 @@ class ProductListState {
 
   @override
   int get hashCode => Object.hash(
-        Object.hashAll(products),
-        isLoading,
-        isLoadingMore,
-        hasError,
-        errorMessage,
-        hasNextPage,
-        skip,
-        limit,
-        searchQuery,
-        selectedCategorySlug,
-      );
+    Object.hashAll(products),
+    isLoading,
+    isLoadingMore,
+    hasError,
+    errorMessage,
+    hasNextPage,
+    skip,
+    limit,
+    searchQuery,
+    selectedCategorySlug,
+  );
 }

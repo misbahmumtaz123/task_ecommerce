@@ -1,4 +1,3 @@
-/// Represents product dimensions from DummyJSON
 class ProductDimensionsModel {
   final double width;
   final double height;
@@ -19,11 +18,7 @@ class ProductDimensionsModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'width': width,
-      'height': height,
-      'depth': depth,
-    };
+    return {'width': width, 'height': height, 'depth': depth};
   }
 
   String get formatted =>
@@ -32,7 +27,6 @@ class ProductDimensionsModel {
   bool get hasDimensions => width > 0 || height > 0 || depth > 0;
 }
 
-/// Represents a customer review from DummyJSON
 class ProductReviewModel {
   final int rating;
   final String comment;
@@ -50,7 +44,8 @@ class ProductReviewModel {
 
   factory ProductReviewModel.fromJson(Map<String, dynamic> json) {
     return ProductReviewModel(
-      rating: (json['rating'] as num?)?.toInt() ??
+      rating:
+          (json['rating'] as num?)?.toInt() ??
           int.tryParse(json['rating']?.toString() ?? '0') ??
           0,
       comment: json['comment']?.toString() ?? '',
@@ -71,7 +66,6 @@ class ProductReviewModel {
   }
 }
 
-/// Represents a product item from DummyJSON with full specification data
 class ProductModel {
   final int id;
   final String title;
@@ -140,7 +134,8 @@ class ProductModel {
     }
 
     return ProductModel(
-      id: (json['id'] as num?)?.toInt() ??
+      id:
+          (json['id'] as num?)?.toInt() ??
           int.tryParse(json['id']?.toString() ?? '0') ??
           0,
       title: json['title']?.toString() ?? '',
@@ -153,7 +148,8 @@ class ProductModel {
       stock: (json['stock'] as num?)?.toInt() ?? 0,
       brand: json['brand']?.toString(),
       thumbnail: json['thumbnail']?.toString() ?? '',
-      images: (json['images'] as List<dynamic>?)
+      images:
+          (json['images'] as List<dynamic>?)
               ?.map((item) => item.toString())
               .where((url) => url.trim().isNotEmpty)
               .toList() ??
@@ -168,14 +164,18 @@ class ProductModel {
       dimensions: parsedDimensions,
       barcode: parsedBarcode,
       qrCode: parsedQrCode,
-      tags: (json['tags'] as List<dynamic>?)
+      tags:
+          (json['tags'] as List<dynamic>?)
               ?.map((item) => item.toString())
               .toList() ??
           [],
-      reviews: (json['reviews'] as List<dynamic>?)
+      reviews:
+          (json['reviews'] as List<dynamic>?)
               ?.whereType<Map>()
-              .map((r) =>
-                  ProductReviewModel.fromJson(Map<String, dynamic>.from(r)))
+              .map(
+                (r) =>
+                    ProductReviewModel.fromJson(Map<String, dynamic>.from(r)),
+              )
               .toList() ??
           [],
     );
@@ -211,13 +211,11 @@ class ProductModel {
     };
   }
 
-  /// Calculates the original price before discount
   double get originalPrice {
     if (discountPercentage <= 0) return price;
     return price / (1 - (discountPercentage / 100));
   }
 
-  /// Calculates savings in dollars
   double get savingsAmount {
     if (discountPercentage <= 0) return 0.0;
     return originalPrice - price;

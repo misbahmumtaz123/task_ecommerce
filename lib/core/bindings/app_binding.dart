@@ -7,7 +7,6 @@ import '../../controllers/onboarding_controller.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/product_repository.dart';
 
-/// Application Bindings class that manages controller dependencies for GetMaterialApp
 class AppBinding extends Bindings {
   @override
   void dependencies() {
@@ -18,7 +17,10 @@ class AppBinding extends Bindings {
       Get.put<FavoritesController>(FavoritesController(), permanent: true);
     }
     if (!Get.isRegistered<OnboardingController>()) {
-      Get.lazyPut<OnboardingController>(() => OnboardingController(), fenix: true);
+      Get.lazyPut<OnboardingController>(
+        () => OnboardingController(),
+        fenix: true,
+      );
     }
     if (!Get.isRegistered<DetailController>()) {
       if (Get.isRegistered<ProductRepository>()) {

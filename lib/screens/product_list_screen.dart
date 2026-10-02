@@ -26,8 +26,6 @@ import '../core/utils/enums/sort_option.dart';
 import '../models/user_model.dart';
 import '../services/tutorial_service.dart';
 
-/// Product listing screen powered completely by Riverpod state management.
-/// Demonstrates ref.watch(), ref.read(), ref.listen(), and rebuild optimization using select().
 class ProductListScreen extends ConsumerStatefulWidget {
   const ProductListScreen({super.key});
 
@@ -41,8 +39,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   Timer? _debounceTimer;
   Timer? _tutorialTimer;
   SortOption _selectedSort = SortOption.featured;
-
-  // Tutorial Coach Mark Feature Keys
   final GlobalKey _searchKey = GlobalKey();
   final GlobalKey _categoriesKey = GlobalKey();
   final GlobalKey _sortKey = GlobalKey();
@@ -61,7 +57,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _tutorialTimer?.cancel();
-      // Slight delay so header and action elements are fully laid out
+
       _tutorialTimer = Timer(const Duration(milliseconds: 600), () {
         if (!mounted) return;
         TutorialService.showTutorialIfNeeded(
@@ -91,8 +87,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
-
-    // Load next page when reaching 300px before end or at bottom
     if (currentScroll >= (maxScroll - 300)) {
       ref.read(productListNotifierProvider.notifier).loadMore();
     }
@@ -124,7 +118,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         list.sort((a, b) => b.rating.compareTo(a.rating));
         break;
       case SortOption.featured:
-        // Keep DummyJSON default order
         break;
     }
     return list;
@@ -264,7 +257,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             ),
           ),
 
-          // 2. Horizontal Categories Selector (Filters)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: KeyedSubtree(
@@ -281,8 +273,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ),
             ),
           ),
-
-          // 3. Count & Sort Bar (Pagination count and Sort)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
@@ -298,10 +288,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                KeyedSubtree(
-                  key: _sortKey,
-                  child: _buildGlassSortDropdown(),
-                ),
+                KeyedSubtree(key: _sortKey, child: _buildGlassSortDropdown()),
               ],
             ),
           ),
@@ -389,7 +376,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 ),
                 subtitle: const Text(
                   'Replay guided feature walkthrough',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -444,7 +434,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Demonstrate ref.listen() for asynchronous side-effects (e.g., showing a floating error snackbar)
     ref.listen<ProductListState>(productListNotifierProvider, (previous, next) {
       if (next.hasError &&
           next.products.isNotEmpty &&
@@ -458,8 +447,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         );
       }
     });
-
-    // 2. Demonstrate rebuild optimization using select()
     final isLoadingInitial = ref.watch(
       productListNotifierProvider.select(
         (state) => state.isLoading && state.products.isEmpty,
@@ -491,15 +478,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     final searchQuery = ref.watch(
       productListNotifierProvider.select((state) => state.searchQuery),
     );
-
-    // Watch category list separately
     final categories = ref.watch(categoryListProvider);
-
-    // GetX FavoritesController for reactive badge
     final favoritesController = Get.find<FavoritesController>();
-
     final sortedProducts = _applySorting(products);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -519,7 +500,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           ],
         ),
         actions: [
-          // Favorites Button with reactive count badge using GetX Obx
           KeyedSubtree(
             key: _favoritesKey,
             child: Obx(() {
@@ -566,7 +546,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               );
             }),
           ),
-          // Shopping Cart Action
           KeyedSubtree(
             key: _cartKey,
             child: CartBadgeButton(
@@ -574,7 +553,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          // User Profile / Auth Action (GetX Obx)
           KeyedSubtree(
             key: _profileKey,
             child: Obx(() {
@@ -636,7 +614,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 child: RefreshIndicator(
                   color: AppColors.primary,
                   onRefresh: () async {
-                    // Use ref.read() for actions
                     await ref
                         .read(productListNotifierProvider.notifier)
                         .refresh();
@@ -733,8 +710,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                             }, childCount: sortedProducts.length),
                           ),
                         ),
-
-                      // Pagination Loading Indicator
                       if (isLoadingMore)
                         const SliverToBoxAdapter(
                           child: Padding(

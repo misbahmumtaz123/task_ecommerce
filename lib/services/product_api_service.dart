@@ -14,7 +14,6 @@ abstract class ProductApiService {
   Future<List<dynamic>> fetchCategories();
 }
 
-/// Concrete implementation of [ProductApiService] talking to DummyJSON
 class ProductApiServiceImpl implements ProductApiService {
   final ApiClient _client;
 

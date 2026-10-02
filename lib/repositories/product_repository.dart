@@ -6,7 +6,6 @@ import '../models/product_model.dart';
 import '../models/product_response_model.dart';
 import '../services/product_api_service.dart';
 
-/// Contract defining data operations for Products
 abstract class ProductRepository {
   Future<Result<ProductResponseModel>> getProducts({
     int limit = 6,
@@ -14,18 +13,19 @@ abstract class ProductRepository {
     PaginationQuery? pagination,
   });
   Future<Result<ProductResponseModel>> searchProducts(String query);
-  Future<Result<ProductResponseModel>> getProductsByCategory(String categorySlug);
+  Future<Result<ProductResponseModel>> getProductsByCategory(
+    String categorySlug,
+  );
   Future<Result<ProductModel>> getProductById(int id);
   Future<Result<List<CategoryModel>>> getCategories();
 }
 
-/// Implementation of [ProductRepository]
 class ProductRepositoryImpl implements ProductRepository {
   final ProductApiService _apiService;
   List<ProductModel>? _allProductsCache;
 
   ProductRepositoryImpl({ProductApiService? apiService})
-      : _apiService = apiService ?? ProductApiServiceImpl();
+    : _apiService = apiService ?? ProductApiServiceImpl();
 
   @override
   Future<Result<ProductResponseModel>> getProducts({
@@ -58,30 +58,20 @@ class ProductRepositoryImpl implements ProductRepository {
       if (clean.isEmpty) {
         return getProducts();
       }
-
-      // 1. Query standard search API endpoint
       Map<String, dynamic>? searchJson;
       try {
         searchJson = await _apiService.searchProducts(clean);
-      } catch (_) {
-        // Fall back gracefully if search endpoint fails
-      }
+      } catch (_) {}
 
       final searchResults = searchJson != null
           ? ProductResponseModel.fromJson(searchJson).products
           : <ProductModel>[];
-
-      // 2. Fetch or reuse all products catalog to support searching by brand and category
       if (_allProductsCache == null) {
         try {
           final allJson = await _apiService.fetchProducts(limit: 0);
           _allProductsCache = ProductResponseModel.fromJson(allJson).products;
-        } catch (_) {
-          // Fall back gracefully if full list is unavailable
-        }
+        } catch (_) {}
       }
-
-      // If full catalog is not available, return standard search results
       if (_allProductsCache == null || _allProductsCache!.isEmpty) {
         return Result.success(
           ProductResponseModel(
@@ -92,8 +82,6 @@ class ProductRepositoryImpl implements ProductRepository {
           ),
         );
       }
-
-      // 3. Match against brand, category, tags, title, description
       final cleanLower = clean.toLowerCase();
       final normalizedQuery = cleanLower.replaceAll(RegExp(r'[\s-_]+'), ' ');
 
@@ -117,7 +105,11 @@ class ProductRepositoryImpl implements ProductRepository {
         final titleMatch = matches(p.title);
         final descMatch = matches(p.description);
 
-        if (brandMatch || categoryMatch || tagMatch || titleMatch || descMatch) {
+        if (brandMatch ||
+            categoryMatch ||
+            tagMatch ||
+            titleMatch ||
+            descMatch) {
           combined.add(p);
           matchedIds.add(p.id);
         }
@@ -139,7 +131,9 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Result<ProductResponseModel>> getProductsByCategory(String categorySlug) async {
+  Future<Result<ProductResponseModel>> getProductsByCategory(
+    String categorySlug,
+  ) async {
     try {
       final json = await _apiService.fetchProductsByCategory(categorySlug);
       final model = ProductResponseModel.fromJson(json);
@@ -174,7 +168,11 @@ class ProductRepositoryImpl implements ProductRepository {
         } else if (item is Map<String, dynamic>) {
           return CategoryModel.fromJson(item);
         } else {
-          return CategoryModel(slug: item.toString(), name: item.toString(), url: '');
+          return CategoryModel(
+            slug: item.toString(),
+            name: item.toString(),
+            url: '',
+          );
         }
       }).toList();
       return Result.success(models);

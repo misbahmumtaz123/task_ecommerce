@@ -1,7 +1,5 @@
 import 'product_model.dart';
 
-/// Paginated product response from DummyJSON (/products).
-/// Parses metadata fields [total], [skip], and [limit] to accurately track pagination state.
 class ProductResponseModel {
   final List<ProductModel> products;
   final int total;
@@ -26,8 +24,6 @@ class ProductResponseModel {
       limit: (json['limit'] as num?)?.toInt() ?? 6,
     );
   }
-
-  /// Helper to check if there are more items to load across infinite scrolls or pages
   bool get hasMore => (skip + products.length) < total;
 
   Map<String, dynamic> toJson() {

@@ -5,10 +5,8 @@ import '../repositories/auth_repository.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
-
   AuthController({AuthRepository? authRepository})
     : _authRepository = authRepository ?? AuthRepositoryImpl();
-
   final Rxn<UserModel> _currentUser = Rxn<UserModel>();
   final RxBool _isLoading = false.obs;
   final RxString _errorMessage = ''.obs;

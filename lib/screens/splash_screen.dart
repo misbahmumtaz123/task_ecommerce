@@ -6,10 +6,8 @@ import '../controllers/navigation_controller.dart';
 import 'onboarding_screen.dart';
 import 'product_list_screen.dart';
 
-/// Premium animated Splash Screen inspired by the eCommerce Figma UI Kit
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -48,8 +46,6 @@ class _SplashScreenState extends State<SplashScreen>
     _timer?.cancel();
     if (!mounted) return;
     final authController = Get.find<AuthController>();
-
-    // If user is already logged in, navigate straight to product catalog; otherwise to onboarding
     if (authController.isAuthenticated) {
       if (Get.isRegistered<NavigationController>()) {
         Get.find<NavigationController>().toProducts();
@@ -130,8 +126,6 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                             ),
                             const SizedBox(height: 28),
-
-                            // App Title
                             const Text(
                               'AuraStore',
                               style: TextStyle(

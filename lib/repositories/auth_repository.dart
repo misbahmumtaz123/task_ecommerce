@@ -3,7 +3,6 @@ import '../core/utils/result.dart';
 import '../models/user_model.dart';
 import '../services/auth_api_service.dart';
 
-/// Contract defining data operations for user authentication
 abstract class AuthRepository {
   Future<Result<UserModel>> login({
     required String username,
@@ -17,17 +16,14 @@ abstract class AuthRepository {
     required String firstName,
     required String lastName,
   });
-
-  /// Logs out the user, terminating session and clearing stored tokens
   Future<Result<bool>> logout();
 }
 
-/// Concrete implementation of [AuthRepository]
 class AuthRepositoryImpl implements AuthRepository {
   final AuthApiService _apiService;
 
   AuthRepositoryImpl({AuthApiService? apiService})
-      : _apiService = apiService ?? AuthApiServiceImpl();
+    : _apiService = apiService ?? AuthApiServiceImpl();
 
   @override
   Future<Result<UserModel>> login({

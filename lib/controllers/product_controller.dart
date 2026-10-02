@@ -10,10 +10,6 @@ enum ProductSortOption {
   ratingHighToLow,
 }
 
-/// Controller responsible for UI-level input orchestration:
-/// - Search debouncing
-/// - Sorting filters
-/// - Coordinating actions with [ProductProvider]
 class ProductController {
   final ProductProvider _productProvider;
   final TextEditingController searchTextController = TextEditingController();
@@ -22,31 +18,30 @@ class ProductController {
   ProductSortOption currentSort = ProductSortOption.featured;
 
   ProductController({required ProductProvider productProvider})
-      : _productProvider = productProvider;
+    : _productProvider = productProvider;
 
-  /// Handles search text input with a 500ms debounce
-  void onSearchChanged(String query, {Duration debounceTime = const Duration(milliseconds: 500)}) {
+  void onSearchChanged(
+    String query, {
+    Duration debounceTime = const Duration(milliseconds: 500),
+  }) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(debounceTime, () {
       _productProvider.searchProducts(query);
     });
   }
 
-  /// Clears search and restores catalog
   void clearSearch() {
     searchTextController.clear();
     _debounceTimer?.cancel();
     _productProvider.fetchAllProducts();
   }
 
-  /// Applies category filter
   void onCategorySelected(String? slug) {
     searchTextController.clear();
     _debounceTimer?.cancel();
     _productProvider.selectCategory(slug);
   }
 
-  /// Sorts products according to the selected criterion
   List<ProductModel> getSortedProducts() {
     final list = List<ProductModel>.from(_productProvider.products);
 
@@ -61,7 +56,6 @@ class ProductController {
         list.sort((a, b) => b.rating.compareTo(a.rating));
         break;
       case ProductSortOption.featured:
-        // Default API order
         break;
     }
 

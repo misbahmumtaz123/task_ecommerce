@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-
 import '../controllers/favorites_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../core/constants/app_colors.dart';
@@ -10,7 +9,6 @@ import '../widgets/cart_badge_button.dart';
 import '../widgets/product_card.dart';
 import '../widgets/state_views.dart';
 
-/// Screen displaying the user's saved favorite products
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
@@ -24,7 +22,11 @@ class FavoritesScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
           onPressed: () {
             if (Get.isRegistered<NavigationController>()) {
               Get.find<NavigationController>().back();
@@ -47,9 +49,9 @@ class FavoritesScreen extends StatelessWidget {
               if (Get.isRegistered<NavigationController>()) {
                 Get.find<NavigationController>().toCart(context);
               } else {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const Scaffold()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const Scaffold()));
               }
             },
           ),
@@ -66,7 +68,8 @@ class FavoritesScreen extends StatelessWidget {
               return EmptyView(
                 icon: Icons.favorite_border_rounded,
                 title: 'No Favorites Yet',
-                subtitle: 'Tap the heart icon on any product to save it for later.',
+                subtitle:
+                    'Tap the heart icon on any product to save it for later.',
                 actionLabel: 'Discover Products',
                 onAction: () {
                   if (Get.isRegistered<NavigationController>()) {
@@ -84,7 +87,11 @@ class FavoritesScreen extends StatelessWidget {
                 maxCrossAxisExtent: 220,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: (0.63 / MediaQuery.textScalerOf(context).scale(1.0)).clamp(0.54, 0.70),
+                childAspectRatio:
+                    (0.63 / MediaQuery.textScalerOf(context).scale(1.0)).clamp(
+                      0.54,
+                      0.70,
+                    ),
               ),
               itemCount: items.length,
               itemBuilder: (context, index) {

@@ -3,22 +3,17 @@ import '../models/category_model.dart';
 import '../models/product_model.dart';
 import '../repositories/product_repository.dart';
 
-/// State Management provider for product browsing, categories, and search
 class ProductProvider extends ChangeNotifier {
   final ProductRepository _repository;
 
   ProductProvider({required ProductRepository repository})
-      : _repository = repository;
-
-  // State variables
+    : _repository = repository;
   List<ProductModel> _products = [];
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
   String? _selectedCategorySlug;
   String _searchQuery = '';
-
-  // Getters
   List<ProductModel> get products => _products;
   List<CategoryModel> get categories => _categories;
   bool get isLoading => _isLoading;
@@ -26,21 +21,15 @@ class ProductProvider extends ChangeNotifier {
   String? get selectedCategorySlug => _selectedCategorySlug;
   String get searchQuery => _searchQuery;
   bool get hasError => _errorMessage != null;
-
-  /// Loads categories and initial product catalog
   Future<void> initialize() async {
     _setLoading(true);
     _clearError();
 
-    await Future.wait([
-      _fetchCategoriesInternal(),
-      _fetchProductsInternal(),
-    ]);
+    await Future.wait([_fetchCategoriesInternal(), _fetchProductsInternal()]);
 
     _setLoading(false);
   }
 
-  /// Refreshes the current view (pull to refresh)
   Future<void> refresh() async {
     if (_searchQuery.isNotEmpty) {
       await searchProducts(_searchQuery);
@@ -51,7 +40,6 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetches all products without filters
   Future<void> fetchAllProducts() async {
     _selectedCategorySlug = null;
     _searchQuery = '';
@@ -62,7 +50,6 @@ class ProductProvider extends ChangeNotifier {
     _setLoading(false);
   }
 
-  /// Filters products by selected category slug
   Future<void> selectCategory(String? slug) async {
     if (_selectedCategorySlug == slug) return;
 
@@ -89,7 +76,6 @@ class ProductProvider extends ChangeNotifier {
     _setLoading(false);
   }
 
-  /// Searches products across DummyJSON
   Future<void> searchProducts(String query) async {
     _searchQuery = query.trim();
     _selectedCategorySlug = null;
@@ -134,9 +120,7 @@ class ProductProvider extends ChangeNotifier {
       success: (data) {
         _categories = data;
       },
-      failure: (exception) {
-        // We log or keep categories empty, non-fatal for main list
-      },
+      failure: (exception) {},
     );
   }
 

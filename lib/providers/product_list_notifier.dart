@@ -6,36 +6,29 @@ import '../repositories/product_repository.dart';
 import 'category_list_provider.dart';
 import 'product_list_state.dart';
 
-/// Provider for accessing the [ProductRepository]
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  throw UnimplementedError('productRepositoryProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+    'productRepositoryProvider must be overridden in ProviderScope',
+  );
 });
-
-/// Riverpod provider for Product List state management
 final productListNotifierProvider =
     StateNotifierProvider<ProductListNotifier, ProductListState>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return ProductListNotifier(repository, ref);
-});
+      final repository = ref.watch(productRepositoryProvider);
+      return ProductListNotifier(repository, ref);
+    });
 
-/// StateNotifier responsible for product list loading, search, filtering, and pagination
 class ProductListNotifier extends StateNotifier<ProductListState> {
   final ProductRepository _repository;
   final Ref _ref;
 
-  ProductListNotifier(this._repository, this._ref) : super(const ProductListState()) {
+  ProductListNotifier(this._repository, this._ref)
+    : super(const ProductListState()) {
     initialize();
   }
-
-  /// Initial load of catalog and categories
   Future<void> initialize() async {
-    await Future.wait([
-      loadCategories(),
-      loadProducts(reset: true),
-    ]);
+    await Future.wait([loadCategories(), loadProducts(reset: true)]);
   }
 
-  /// Loads products based on current search query, category, or pagination state
   Future<void> loadProducts({bool reset = false}) async {
     if (reset) {
       state = state.copyWith(
@@ -76,7 +69,8 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
             ? response.products
             : [...state.products, ...response.products];
 
-        final bool hasMore = (query.isEmpty && (category == null || category.isEmpty))
+        final bool hasMore =
+            (query.isEmpty && (category == null || category.isEmpty))
             ? response.hasMore
             : false;
 
@@ -101,7 +95,6 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
     );
   }
 
-  /// Loads next page of products when scrolling
   Future<void> loadMore() async {
     if (state.isLoading || state.isLoadingMore || !state.hasNextPage) return;
 
@@ -131,33 +124,29 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
         );
       },
       failure: (exception) {
-        state = state.copyWith(
-          isLoadingMore: false,
-        );
+        state = state.copyWith(isLoadingMore: false);
       },
     );
   }
 
-  /// Refreshes the current list view (pull to refresh)
   Future<void> refresh() async {
     await loadProducts(reset: true);
   }
 
-  /// Debounced or immediate search query updates
   void setSearch(String query) {
     if (state.searchQuery == query) return;
-    state = state.copyWith(
-      searchQuery: query,
-      selectedCategorySlug: null,
-    );
+    state = state.copyWith(searchQuery: query, selectedCategorySlug: null);
     loadProducts(reset: true);
   }
 
-  /// Updates selected category filter
   void setCategory(String? slug) {
-    final effectiveSlug =
-        (slug != null && slug.trim().isNotEmpty) ? slug.trim() : null;
-    if (state.selectedCategorySlug == effectiveSlug && state.searchQuery.isEmpty) return;
+    final effectiveSlug = (slug != null && slug.trim().isNotEmpty)
+        ? slug.trim()
+        : null;
+    if (state.selectedCategorySlug == effectiveSlug &&
+        state.searchQuery.isEmpty) {
+      return;
+    }
     state = state.copyWith(
       selectedCategorySlug: effectiveSlug,
       searchQuery: '',
@@ -165,25 +154,18 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
     loadProducts(reset: true);
   }
 
-  /// Clears search and category filter
   void clearFilters() {
-    state = state.copyWith(
-      searchQuery: '',
-      selectedCategorySlug: null,
-    );
+    state = state.copyWith(searchQuery: '', selectedCategorySlug: null);
     loadProducts(reset: true);
   }
 
-  /// Loads categories list from repository
   Future<void> loadCategories() async {
     final result = await _repository.getCategories();
     result.when(
       success: (categories) {
         _ref.read(categoryListProvider.notifier).state = categories;
       },
-      failure: (_) {
-        // Keep categories empty on failure
-      },
+      failure: (_) {},
     );
   }
 }

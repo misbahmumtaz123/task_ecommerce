@@ -10,8 +10,6 @@ import '../providers/cart_provider.dart';
 import '../widgets/state_views.dart';
 import 'product_detail_screen.dart';
 
-/// Screen managing user shopping cart, quantities, and order summary.
-/// Responsive and overflow-protected across phone and tablet screens.
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -89,7 +87,6 @@ class CartScreen extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              // Tappable product thumbnail and details
                               Expanded(
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(10),
@@ -105,7 +102,6 @@ class CartScreen extends StatelessWidget {
                                   },
                                   child: Row(
                                     children: [
-                                      // Thumbnail
                                       Container(
                                         width: 64,
                                         height: 64,
@@ -127,7 +123,6 @@ class CartScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 12),
 
-                                      // Title and Price
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
@@ -165,8 +160,6 @@ class CartScreen extends StatelessWidget {
                               ),
 
                               const SizedBox(width: 8),
-
-                              // Quantity Controls
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -251,8 +244,8 @@ class CartScreen extends StatelessWidget {
                               onPressed: () {
                                 final authController =
                                     Get.isRegistered<AuthController>()
-                                        ? Get.find<AuthController>()
-                                        : null;
+                                    ? Get.find<AuthController>()
+                                    : null;
 
                                 if (authController == null ||
                                     !authController.isAuthenticated) {
@@ -323,15 +316,12 @@ class CartScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: AppColors.surface,
         contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Warning Icon Badge
             Container(
               width: 64,
               height: 64,
@@ -366,11 +356,8 @@ class CartScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-
-            // 2 Stylish Buttons: Cancel & Clear
             Row(
               children: [
-                // Stylish Cancel Button
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(dialogCtx).pop(),
@@ -396,8 +383,6 @@ class CartScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Stylish Clear Button
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -442,9 +427,7 @@ class CartScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: AppColors.surface,
         contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
         content: Column(
@@ -506,10 +489,7 @@ class CartScreen extends StatelessWidget {
                 ),
                 child: const Text(
                   'Sign In',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
