@@ -83,7 +83,7 @@ The application strictly enforces separation of concerns so that UI widgets neve
                ▼                              ▼
 ┌──────────────────────────────┐┌─────────────────────────────┐
 │     Riverpod State Layer     ││      GetX State Layer       │
-│ (ProductListNotifier, State) ││ (Favorites, Detail, Auth)   │
+│ (ProductListNotifier, State) ││ (Favorites, Detail)   │
 └──────────────┬───────────────┘└─────────────┬───────────────┘
                │                              │
                └──────────────┬───────────────┘
@@ -164,7 +164,7 @@ GetX is leveraged for Product Details, Favorites, and Authentication for high-pe
 - **Controllers Created**:
   - `FavoritesController`: Manages an observable list (`RxList<ProductModel>`). Exposes `isFavorite(id)`, `toggleFavorite(product)`, and `removeFavorite(id)`.
   - `DetailController`: Manages the state of the active product detail screen, fetching by product ID, tracking selected image carousel index, and handling fallback data.
-  - `AuthController`: Manages user authentication state, demo credentials auto-fill, and session logout.
+  - `AuthController`: Manages user authentication state, demo credentials auto-fill, and session logout, authentication is not implemented .
   - `LoginController` & `RegisterController`: Handle form inputs, reactivity, and strict input validation rules.
 
 - **Dependency Injection**:
@@ -254,7 +254,6 @@ flutter test --concurrency=1
 
 # Run individual test files
 flutter test test/validators_test.dart
-flutter test test/auth_controller_test.dart
 flutter test test/detail_controller_test.dart
 flutter test test/favorites_controller_test.dart
 flutter test test/product_repository_test.dart
@@ -265,7 +264,7 @@ flutter test test/onboarding_screen_test.dart
 
 ### Test Coverage Highlights:
 - `validators_test.dart`: Validates email formats and password rules (uppercase, digit, special char, length).
-- `auth_controller_test.dart` & `auth_validation_flow_test.dart`: Login, registration, and logout flows.
+- `auth_validation_flow_test.dart`: Login, registration, and logout flows.
 - `detail_controller_test.dart`: Detail fetching by ID, fallback caching, and image carousel updates.
 - `favorites_controller_test.dart`: Adding/removing items and cross-screen sync.
 - `product_repository_test.dart`: JSON deserialization and API error mapping.
