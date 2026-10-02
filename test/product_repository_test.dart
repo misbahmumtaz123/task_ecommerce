@@ -22,11 +22,24 @@ class FakeProductApiService implements ProductApiService {
           'images': [
             'https://i.dummyjson.com/data/products/1/1.jpg',
           ],
+        },
+        {
+          'id': 2,
+          'title': 'Eyeshadow Palette',
+          'description': 'Glamorous shades',
+          'category': 'beauty',
+          'price': 19.99,
+          'discountPercentage': 5.0,
+          'rating': 4.5,
+          'stock': 20,
+          'brand': 'Glamour Beauty',
+          'thumbnail': 'https://i.dummyjson.com/data/products/2/thumbnail.jpg',
+          'images': [],
         }
       ],
-      'total': 100,
+      'total': 2,
       'skip': 0,
-      'limit': 1,
+      'limit': 2,
     };
   }
 
@@ -89,8 +102,8 @@ void main() {
       expect(result.isSuccess, isTrue);
       result.when(
         success: (response) {
-          expect(response.total, 100);
-          expect(response.products.length, 1);
+          expect(response.total, 2);
+          expect(response.products.length, 2);
           final first = response.products.first;
           expect(first.id, 1);
           expect(first.title, 'iPhone 9');
@@ -100,6 +113,32 @@ void main() {
           expect(first.brand, 'Apple');
         },
         failure: (e) => fail('Should not fail with fake service'),
+      );
+    });
+
+    test('searchProducts finds products by brand', () async {
+      final result = await repository.searchProducts('Glamour Beauty');
+
+      expect(result.isSuccess, isTrue);
+      result.when(
+        success: (response) {
+          expect(response.products.any((p) => p.brand == 'Glamour Beauty'), isTrue);
+          expect(response.products.first.id, 2);
+        },
+        failure: (e) => fail('Brand search should succeed'),
+      );
+    });
+
+    test('searchProducts finds products by category', () async {
+      final result = await repository.searchProducts('smartphones');
+
+      expect(result.isSuccess, isTrue);
+      result.when(
+        success: (response) {
+          expect(response.products.any((p) => p.category == 'smartphones'), isTrue);
+          expect(response.products.first.id, 1);
+        },
+        failure: (e) => fail('Category search should succeed'),
       );
     });
 

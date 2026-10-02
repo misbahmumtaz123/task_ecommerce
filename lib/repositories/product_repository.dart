@@ -22,6 +22,7 @@ abstract class ProductRepository {
 /// Implementation of [ProductRepository]
 class ProductRepositoryImpl implements ProductRepository {
   final ProductApiService _apiService;
+  List<ProductModel>? _allProductsCache;
 
   ProductRepositoryImpl({ProductApiService? apiService})
       : _apiService = apiService ?? ProductApiServiceImpl();
@@ -39,6 +40,9 @@ class ProductRepositoryImpl implements ProductRepository {
         pagination: pagination,
       );
       final model = ProductResponseModel.fromJson(json);
+      if (limit == 0 || model.products.length == model.total) {
+        _allProductsCache = model.products;
+      }
       return Result.success(model);
     } on AppException catch (e) {
       return Result.failure(e);
@@ -50,9 +54,83 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<ProductResponseModel>> searchProducts(String query) async {
     try {
-      final json = await _apiService.searchProducts(query);
-      final model = ProductResponseModel.fromJson(json);
-      return Result.success(model);
+      final clean = query.trim();
+      if (clean.isEmpty) {
+        return getProducts();
+      }
+
+      // 1. Query standard search API endpoint
+      Map<String, dynamic>? searchJson;
+      try {
+        searchJson = await _apiService.searchProducts(clean);
+      } catch (_) {
+        // Fall back gracefully if search endpoint fails
+      }
+
+      final searchResults = searchJson != null
+          ? ProductResponseModel.fromJson(searchJson).products
+          : <ProductModel>[];
+
+      // 2. Fetch or reuse all products catalog to support searching by brand and category
+      if (_allProductsCache == null) {
+        try {
+          final allJson = await _apiService.fetchProducts(limit: 0);
+          _allProductsCache = ProductResponseModel.fromJson(allJson).products;
+        } catch (_) {
+          // Fall back gracefully if full list is unavailable
+        }
+      }
+
+      // If full catalog is not available, return standard search results
+      if (_allProductsCache == null || _allProductsCache!.isEmpty) {
+        return Result.success(
+          ProductResponseModel(
+            products: searchResults,
+            total: searchResults.length,
+            skip: 0,
+            limit: searchResults.length,
+          ),
+        );
+      }
+
+      // 3. Match against brand, category, tags, title, description
+      final cleanLower = clean.toLowerCase();
+      final normalizedQuery = cleanLower.replaceAll(RegExp(r'[\s-_]+'), ' ');
+
+      bool matches(String? text) {
+        if (text == null || text.isEmpty) return false;
+        final tLower = text.toLowerCase();
+        if (tLower.contains(cleanLower)) return true;
+        final tNormalized = tLower.replaceAll(RegExp(r'[\s-_]+'), ' ');
+        return tNormalized.contains(normalizedQuery);
+      }
+
+      final matchedIds = <int>{for (final p in searchResults) p.id};
+      final combined = List<ProductModel>.from(searchResults);
+
+      for (final p in _allProductsCache!) {
+        if (matchedIds.contains(p.id)) continue;
+
+        final brandMatch = matches(p.brand);
+        final categoryMatch = matches(p.category);
+        final tagMatch = p.tags.any((t) => matches(t));
+        final titleMatch = matches(p.title);
+        final descMatch = matches(p.description);
+
+        if (brandMatch || categoryMatch || tagMatch || titleMatch || descMatch) {
+          combined.add(p);
+          matchedIds.add(p.id);
+        }
+      }
+
+      return Result.success(
+        ProductResponseModel(
+          products: combined,
+          total: combined.length,
+          skip: 0,
+          limit: combined.length,
+        ),
+      );
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {

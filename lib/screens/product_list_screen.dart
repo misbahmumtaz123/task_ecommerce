@@ -484,10 +484,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       productListNotifierProvider.select((state) => state.isLoadingMore),
     );
 
-    final hasNextPage = ref.watch(
-      productListNotifierProvider.select((state) => state.hasNextPage),
-    );
-
     final selectedCategorySlug = ref.watch(
       productListNotifierProvider.select((state) => state.selectedCategorySlug),
     );
@@ -752,26 +748,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     AppColors.primary,
                                   ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // End of Catalog indicator
-                      if (!isLoadingMore &&
-                          !hasNextPage &&
-                          sortedProducts.isNotEmpty)
-                        const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: Text(
-                                'You have reached the end of the catalog',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textMuted,
-                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
