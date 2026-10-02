@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/constants/app_colors.dart';
+import '../core/routing/app_routes.dart';
 import 'auth_controller.dart';
 import 'navigation_controller.dart';
 
-/// Controller managing Login form state and authentication operations
 class LoginController extends GetxController {
-  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+  TextEditingController get usernameController => emailController;
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
@@ -16,47 +17,40 @@ class LoginController extends GetxController {
     isPasswordObscured.value = !isPasswordObscured.value;
   }
 
-  void setDemoCredentials(String username, String password) {
-    usernameController.text = username;
+  void setCredentials(String email, String password) {
+    emailController.text = email;
+    passwordController.text = password;
+  }
+
+  void setDemoCredentials(String usernameOrEmail, String password) {
+    emailController.text = usernameOrEmail;
     passwordController.text = password;
   }
 
   Future<void> handleLogin() async {
     if (!formKey.currentState!.validate()) return;
 
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
     final authController = Get.find<AuthController>();
-    final success = await authController.login(
-      usernameController.text.trim(),
-      passwordController.text.trim(),
+    authController.loginWithCredentials(email: email, password: password);
+
+    Get.snackbar(
+      'Welcome, ${authController.currentUser?.firstName ?? 'Shopper'}! 🎉',
+      'Signed in successfully.',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: AppColors.success,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 2),
     );
 
-    if (success) {
-      Get.snackbar(
-        'Welcome, ${authController.currentUser?.firstName ?? 'Shopper'}! 🎉',
-        'Signed in successfully with DummyJSON.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 2),
-      );
-      if (Get.isRegistered<NavigationController>()) {
-        Get.find<NavigationController>().toProducts();
-      }
+    if (Get.isRegistered<NavigationController>()) {
+      Get.find<NavigationController>().toProducts();
     } else {
-      Get.snackbar(
-        'Sign In Failed',
-        authController.errorMessage.isNotEmpty
-            ? authController.errorMessage
-            : 'Unable to sign in. Please check your credentials.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
-      );
+      Get.offAllNamed(AppRoutes.products);
     }
   }
 
@@ -74,7 +68,7 @@ class LoginController extends GetxController {
 
   @override
   void onClose() {
-    usernameController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     super.onClose();
   }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/navigation_controller.dart';
-import '../core/constants/app_colors.dart';
 import 'onboarding_screen.dart';
 import 'product_list_screen.dart';
 
@@ -113,36 +112,20 @@ class _SplashScreenState extends State<SplashScreen>
                               width: 104,
                               height: 104,
                               decoration: BoxDecoration(
-                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 30,
                                     offset: const Offset(0, 12),
                                   ),
                                 ],
                               ),
-                              child: Center(
-                                child: Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.secondary,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Icon(
-                                    Icons.shopping_bag_rounded,
-                                    size: 44,
-                                    color: Colors.white,
-                                  ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(28),
+                                child: Image.asset(
+                                  'assets/images/logo.png',
+                                  fit: BoxFit.contain,
                                 ),
                               ),
                             ),

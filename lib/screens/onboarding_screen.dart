@@ -75,12 +75,15 @@ class OnboardingScreen extends StatelessWidget {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.primary, AppColors.secondary],
-                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.shopping_bag_rounded, size: 18, color: Colors.white),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           const Text(
@@ -108,7 +111,7 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Page Carousel
+                // Page Carousel (Responsive across all phone sizes)
                 Expanded(
                   child: PageView.builder(
                     controller: controller.pageController,
@@ -116,91 +119,125 @@ class OnboardingScreen extends StatelessWidget {
                     onPageChanged: controller.onPageChanged,
                     itemBuilder: (context, index) {
                       final item = _pages[index];
-                      return SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 20),
-                              // Visual Graphic Card
-                              Container(
-                                width: 240,
-                                height: 240,
-                                decoration: BoxDecoration(
-                                  color: item.accentColor.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                  ),
-                                child: Center(
-                                  child: Container(
-                                    width: 170,
-                                    height: 170,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: item.accentColor.withValues(alpha: 0.2),
-                                          blurRadius: 24,
-                                          offset: const Offset(0, 8),
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final h = constraints.maxHeight;
+                          // Responsive sizing based on available viewport height
+                          final outerCircleSize =
+                              (h * 0.35).clamp(130.0, 220.0);
+                          final innerCircleSize = outerCircleSize * 0.71;
+                          final iconSize = outerCircleSize * 0.35;
+                          final titleFontSize =
+                              (h * 0.034).clamp(18.0, 24.0);
+                          final subtitleFontSize =
+                              (h * 0.021).clamp(12.5, 14.5);
+                          final titleSpacing = (h * 0.02).clamp(8.0, 16.0);
+                          final subtitleSpacing =
+                              (h * 0.015).clamp(6.0, 12.0);
+
+                          return SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: IntrinsicHeight(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 28),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      const Spacer(flex: 2),
+                                      // Visual Graphic Card
+                                      Container(
+                                        width: outerCircleSize,
+                                        height: outerCircleSize,
+                                        decoration: BoxDecoration(
+                                          color: item.accentColor
+                                              .withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
                                         ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      item.icon,
-                                      size: 80,
-                                      color: item.accentColor,
-                                    ),
+                                        child: Center(
+                                          child: Container(
+                                            width: innerCircleSize,
+                                            height: innerCircleSize,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: item.accentColor
+                                                      .withValues(alpha: 0.2),
+                                                  blurRadius: 24,
+                                                  offset: const Offset(0, 8),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              item.icon,
+                                              size: iconSize,
+                                              color: item.accentColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const Spacer(flex: 2),
+
+                                      // Category Badge
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: item.accentColor
+                                              .withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          item.badgeText,
+                                          style: TextStyle(
+                                            color: item.accentColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: titleSpacing),
+
+                                      // Slide Title
+                                      Text(
+                                        item.title,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: titleFontSize,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.textPrimary,
+                                          height: 1.25,
+                                        ),
+                                      ),
+                                      SizedBox(height: subtitleSpacing),
+
+                                      // Slide Subtitle
+                                      Text(
+                                        item.subtitle,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: subtitleFontSize,
+                                          color: AppColors.textSecondary,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                      const Spacer(flex: 3),
+                                    ],
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 36),
-
-                              // Category Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: item.accentColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  item.badgeText,
-                                  style: TextStyle(
-                                    color: item.accentColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Slide Title
-                              Text(
-                                item.title,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                  height: 1.25,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Slide Subtitle
-                              Text(
-                                item.subtitle,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14.5,
-                                  color: AppColors.textSecondary,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -208,7 +245,7 @@ class OnboardingScreen extends StatelessWidget {
 
                 // Bottom Navigation controls
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
                   child: Column(
                     children: [
                       // Smooth Page Indicators using Obx

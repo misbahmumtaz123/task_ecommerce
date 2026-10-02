@@ -5,8 +5,6 @@ import '../models/product_model.dart';
 import '../repositories/product_repository.dart';
 import 'favorites_controller.dart';
 
-/// GetX Controller for the Product Details screen.
-/// Fetches product details by ID and manages local screen states (image index, loading, error).
 class DetailController extends GetxController {
   final ProductRepository repository;
 
@@ -28,7 +26,6 @@ class DetailController extends GetxController {
     _selectedImageIndex.value = index;
   }
 
-  /// Returns unique cleaned image list for the product gallery
   List<String> get imageList {
     final p = _product.value;
     if (p == null) return [];
@@ -81,7 +78,6 @@ class DetailController extends GetxController {
     }
   }
 
-  /// Hard resets all state — call this at the start of each new product detail navigation
   void reset() {
     _product.value = null;
     _isLoading.value = false;
@@ -90,7 +86,6 @@ class DetailController extends GetxController {
     _selectedQuantity.value = 1;
   }
 
-  /// Sets the product immediately to prevent blank/not found screen while fresh details load
   void setProduct(ProductModel product) {
     _product.value = product;
     _isLoading.value = false;
@@ -99,7 +94,6 @@ class DetailController extends GetxController {
     _selectedQuantity.value = 1;
   }
 
-  /// Prepares controller for loading a product by ID if no initial data is present
   void startLoadingForProduct(int id) {
     _product.value = null;
     _isLoading.value = true;
@@ -107,8 +101,6 @@ class DetailController extends GetxController {
     _selectedImageIndex.value = 0;
   }
 
-  /// Fetches product details by product ID from repository with optional fallback.
-  /// If [fallbackProduct] is provided it is shown immediately while the API loads fresh data.
   Future<void> fetchProduct(int id, {ProductModel? fallbackProduct}) async {
     if (fallbackProduct != null) {
       _product.value = fallbackProduct;
@@ -131,7 +123,6 @@ class DetailController extends GetxController {
           if (_product.value == null) {
             _errorMessage.value = exception.message;
           }
-          // If we have a fallback, we keep showing it silently on fetch failure
         },
       );
     } catch (e) {
@@ -143,7 +134,6 @@ class DetailController extends GetxController {
     }
   }
 
-  /// Check if the currently viewed product is favorited
   bool isFavorite(int id) {
     if (Get.isRegistered<FavoritesController>()) {
       return Get.find<FavoritesController>().isFavorite(id);
@@ -151,7 +141,6 @@ class DetailController extends GetxController {
     return false;
   }
 
-  /// Toggle favorite status of current product
   void toggleFavorite() {
     final p = _product.value;
     if (p != null && Get.isRegistered<FavoritesController>()) {
@@ -159,7 +148,6 @@ class DetailController extends GetxController {
     }
   }
 
-  /// Open high-resolution image zoom modal dialog
   void openImageZoom(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
@@ -203,7 +191,8 @@ class DetailController extends GetxController {
               child: IconButton.filled(
                 icon: const Icon(Icons.close_rounded, color: Colors.white),
                 style: IconButton.styleFrom(
-                    backgroundColor: Colors.black.withValues(alpha: 0.6)),
+                  backgroundColor: Colors.black.withValues(alpha: 0.6),
+                ),
                 onPressed: () => Navigator.of(ctx).pop(),
               ),
             ),

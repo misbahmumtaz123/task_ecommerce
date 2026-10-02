@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'navigation_controller.dart';
 
-/// GetX controller managing the interactive onboarding presentation state
 class OnboardingController extends GetxController {
   final PageController pageController = PageController();
   final RxInt _currentIndex = 0.obs;

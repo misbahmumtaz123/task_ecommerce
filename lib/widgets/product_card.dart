@@ -97,7 +97,7 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Reactive Favorite Button synchronized via GetX
+                    // Favorite Button
                     Positioned(
                       top: 6,
                       right: 6,

@@ -38,7 +38,6 @@ class LoadingView extends StatelessWidget {
   }
 }
 
-/// Generic error view with retry action (protected against keyboard & landscape overflow)
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

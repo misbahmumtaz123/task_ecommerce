@@ -1,7 +1,6 @@
 import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
 
-/// Contract for Authentication API operations
 abstract class AuthApiService {
   Future<Map<String, dynamic>> login({
     required String username,
@@ -16,11 +15,9 @@ abstract class AuthApiService {
     required String lastName,
   });
 
-  /// Terminates the user session and invalidates auth tokens
   Future<void> logout();
 }
 
-/// Concrete implementation of [AuthApiService] using DummyJSON
 class AuthApiServiceImpl implements AuthApiService {
   final ApiClient _client;
 
@@ -65,7 +62,6 @@ class AuthApiServiceImpl implements AuthApiService {
 
   @override
   Future<void> logout() async {
-    // Encapsulate external session termination / token clearance
     await Future.delayed(const Duration(milliseconds: 100));
   }
 }

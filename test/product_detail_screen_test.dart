@@ -140,14 +140,51 @@ void main() {
     expect(find.text('Great quality mascara!'), findsOneWidget);
   });
 
-  testWidgets('Shows stock status, shipping and warranty specs', (tester) async {
+  testWidgets('Shows stock status, shipping, warranty, and return policy specs with equal size and responsive layout', (tester) async {
+    tester.view.physicalSize = const Size(400, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     await tester.pumpWidget(
         _buildApp(_testProduct, initialProduct: _testProduct));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('In Stock'), findsWidgets);
-    expect(find.textContaining('Ships in'), findsOneWidget);
-    expect(find.textContaining('warranty'), findsOneWidget);
+    expect(find.text('Stock Status'), findsOneWidget);
+    expect(find.text('Shipping'), findsOneWidget);
+    expect(find.text('Warranty'), findsOneWidget);
+    expect(find.text('Return Policy'), findsOneWidget);
+
+    final stockFinder = find.ancestor(of: find.text('Stock Status'), matching: find.byType(Container)).first;
+    final shippingFinder = find.ancestor(of: find.text('Shipping'), matching: find.byType(Container)).first;
+    final warrantyFinder = find.ancestor(of: find.text('Warranty'), matching: find.byType(Container)).first;
+    final returnPolicyFinder = find.ancestor(of: find.text('Return Policy'), matching: find.byType(Container)).first;
+
+    final stockSize = tester.getSize(stockFinder);
+    final shippingSize = tester.getSize(shippingFinder);
+    final warrantySize = tester.getSize(warrantyFinder);
+    final returnPolicySize = tester.getSize(returnPolicyFinder);
+
+    // All 4 containers have the exact same height and width
+    expect(stockSize.height, equals(84.0));
+    expect(shippingSize.height, equals(84.0));
+    expect(warrantySize.height, equals(84.0));
+    expect(returnPolicySize.height, equals(84.0));
+
+    expect(stockSize.width, equals(shippingSize.width));
+    expect(warrantySize.width, equals(returnPolicySize.width));
+    expect(stockSize.width, equals(warrantySize.width));
+  });
+
+  testWidgets('Displays NEW tag badge on the product image', (tester) async {
+    await tester.pumpWidget(
+        _buildApp(_testProduct, initialProduct: _testProduct));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('product_image_new_tag')), findsOneWidget);
+    expect(find.text('NEW'), findsOneWidget);
   });
 
   testWidgets('Gallery shows image count indicator when product has images',

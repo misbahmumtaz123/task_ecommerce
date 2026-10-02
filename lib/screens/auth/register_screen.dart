@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../controllers/auth_controller.dart';
 import '../../controllers/register_controller.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/validators.dart';
 
 /// User Registration Screen connected with DummyJSON `/users/add`
 /// Clean Stateless Architecture with reactive state managed by [RegisterController] & [AuthController].
@@ -32,7 +32,7 @@ class RegisterScreen extends StatelessWidget {
           'Create Account',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -67,60 +67,83 @@ class RegisterScreen extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // First & Last Name
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final firstNameField = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'First Name',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller:
+                                  registerController.firstNameController,
+                              decoration: _buildInputDecoration(
+                                'First name',
+                                prefixIcon: Icons.badge_outlined,
+                              ),
+                              validator: (val) =>
+                                  val == null || val.trim().isEmpty
+                                  ? 'First Name is required'
+                                  : null,
+                            ),
+                          ],
+                        );
+
+                        final lastNameField = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Last Name',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: registerController.lastNameController,
+                              decoration: _buildInputDecoration(
+                                'Last name',
+                                prefixIcon: Icons.badge_outlined,
+                              ),
+                              validator: (val) =>
+                                  val == null || val.trim().isEmpty
+                                  ? 'Last Name is required'
+                                  : null,
+                            ),
+                          ],
+                        );
+
+                        // Responsive: On narrow screens (< 280 content width), stack vertically to prevent cramped text
+                        if (constraints.maxWidth < 280) {
+                          return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'First Name',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              TextFormField(
-                                controller:
-                                    registerController.firstNameController,
-                                decoration: _buildInputDecoration('First name'),
-                                validator: (val) =>
-                                    val == null || val.trim().isEmpty
-                                    ? 'Required'
-                                    : null,
-                              ),
+                              firstNameField,
+                              const SizedBox(height: 16),
+                              lastNameField,
                             ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Last Name',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              TextFormField(
-                                controller:
-                                    registerController.lastNameController,
-                                decoration: _buildInputDecoration('Last name'),
-                                validator: (val) =>
-                                    val == null || val.trim().isEmpty
-                                    ? 'Required'
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                          );
+                        }
+
+                        // Top-aligned Row ensures fields remain strictly fixed in place when text is entered
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: firstNameField),
+                            const SizedBox(width: 12),
+                            Expanded(child: lastNameField),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -163,15 +186,7 @@ class RegisterScreen extends StatelessWidget {
                         'your.email@example.com',
                         prefixIcon: Icons.email_outlined,
                       ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Email is required';
-                        }
-                        if (!val.contains('@')) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
+                      validator: Validators.validateEmail,
                     ),
                     const SizedBox(height: 16),
 
@@ -190,7 +205,7 @@ class RegisterScreen extends StatelessWidget {
                         controller: registerController.passwordController,
                         obscureText: authController.obscurePassword,
                         decoration: _buildInputDecoration(
-                          'Create a secure password',
+                          'Enter the password',
                           prefixIcon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -203,15 +218,7 @@ class RegisterScreen extends StatelessWidget {
                             onPressed: authController.togglePasswordVisibility,
                           ),
                         ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Password is required';
-                          }
-                          if (val.length < 6) {
-                            return 'Must be at least 6 characters';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validatePassword,
                       );
                     }),
                     const SizedBox(height: 14),
@@ -289,28 +296,31 @@ class RegisterScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Link back to Login
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Already have an account? ',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: registerController.backToLogin,
-                          child: const Text(
-                            'Sign In',
+                    Center(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text(
+                            'Already have an account? ',
                             style: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
                               fontSize: 14,
                             ),
                           ),
-                        ),
-                      ],
+                          GestureDetector(
+                            onTap: registerController.backToLogin,
+                            child: const Text(
+                              'Sign In',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -337,7 +347,9 @@ class RegisterScreen extends StatelessWidget {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      isDense: true,
+      errorStyle: const TextStyle(fontSize: 11, height: 1.1),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.border),
@@ -349,6 +361,14 @@ class RegisterScreen extends StatelessWidget {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.0),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
       ),
     );
   }

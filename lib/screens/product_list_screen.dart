@@ -9,6 +9,7 @@ import 'package:provider/provider.dart'
 import '../controllers/auth_controller.dart';
 import '../controllers/favorites_controller.dart';
 import '../core/constants/app_colors.dart';
+import '../core/routing/app_routes.dart';
 import '../models/category_model.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
@@ -23,6 +24,7 @@ import '../widgets/state_views.dart';
 import '../controllers/navigation_controller.dart';
 import '../core/utils/enums/sort_option.dart';
 import '../models/user_model.dart';
+import '../services/tutorial_service.dart';
 
 /// Product listing screen powered completely by Riverpod state management.
 /// Demonstrates ref.watch(), ref.read(), ref.listen(), and rebuild optimization using select().
@@ -37,16 +39,47 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _debounceTimer;
+  Timer? _tutorialTimer;
   SortOption _selectedSort = SortOption.featured;
+
+  // Tutorial Coach Mark Feature Keys
+  final GlobalKey _searchKey = GlobalKey();
+  final GlobalKey _categoriesKey = GlobalKey();
+  final GlobalKey _sortKey = GlobalKey();
+  final GlobalKey _favoritesKey = GlobalKey();
+  final GlobalKey _cartKey = GlobalKey();
+  final GlobalKey _profileKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _initTutorial();
+  }
+
+  void _initTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _tutorialTimer?.cancel();
+      // Slight delay so header and action elements are fully laid out
+      _tutorialTimer = Timer(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        TutorialService.showTutorialIfNeeded(
+          context: context,
+          searchKey: _searchKey,
+          categoriesKey: _categoriesKey,
+          sortKey: _sortKey,
+          favoritesKey: _favoritesKey,
+          cartKey: _cartKey,
+          profileKey: _profileKey,
+        );
+      });
+    });
   }
 
   @override
   void dispose() {
+    _tutorialTimer?.cancel();
     _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.removeListener(_onScroll);
@@ -221,47 +254,57 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           // 1. Search Input Field
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 4),
-            child: ProductSearchBar(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              onClear: _onClearSearch,
+            child: KeyedSubtree(
+              key: _searchKey,
+              child: ProductSearchBar(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                onClear: _onClearSearch,
+              ),
             ),
           ),
 
           // 2. Horizontal Categories Selector (Filters)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
-            child: CategorySelector(
-              categories: categories,
-              selectedSlug: selectedCategorySlug,
-              onSelectCategory: (slug) {
-                _searchController.clear();
-                ref
-                    .read(productListNotifierProvider.notifier)
-                    .setCategory(slug);
-              },
+            child: KeyedSubtree(
+              key: _categoriesKey,
+              child: CategorySelector(
+                categories: categories,
+                selectedSlug: selectedCategorySlug,
+                onSelectCategory: (slug) {
+                  _searchController.clear();
+                  ref
+                      .read(productListNotifierProvider.notifier)
+                      .setCategory(slug);
+                },
+              ),
             ),
           ),
 
           // 3. Count & Sort Bar (Pagination count and Sort)
-          if (!isLoadingInitial && !hasInitialError && products.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${products.length} Products',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isLoadingInitial
+                      ? 'Loading catalog...'
+                      : '${products.length} Products',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
                   ),
-                  _buildGlassSortDropdown(),
-                ],
-              ),
+                ),
+                KeyedSubtree(
+                  key: _sortKey,
+                  child: _buildGlassSortDropdown(),
+                ),
+              ],
             ),
+          ),
           const SizedBox(height: 4),
         ],
       ),
@@ -334,6 +377,36 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               const Divider(color: AppColors.border),
               ListTile(
                 leading: const Icon(
+                  Icons.help_outline_rounded,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  'App Feature Tour',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Replay guided feature walkthrough',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  TutorialService.showTutorialIfNeeded(
+                    context: context,
+                    searchKey: _searchKey,
+                    categoriesKey: _categoriesKey,
+                    sortKey: _sortKey,
+                    favoritesKey: _favoritesKey,
+                    cartKey: _cartKey,
+                    profileKey: _profileKey,
+                    force: true,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
                   Icons.logout_rounded,
                   color: AppColors.error,
                 ),
@@ -344,12 +417,19 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                onTap: () {
-                  authController.logout();
-                  Navigator.of(ctx).pop();
+                onTap: () async {
+                  if (Navigator.of(ctx).canPop()) {
+                    Navigator.of(ctx).pop();
+                  }
+                  await authController.logout();
+                  if (Get.isRegistered<NavigationController>()) {
+                    Get.find<NavigationController>().toLogin();
+                  } else {
+                    Get.offAllNamed(AppRoutes.login);
+                  }
                   Get.snackbar(
                     'Signed Out',
-                    'You have been signed out from DummyJSON.',
+                    'You have been signed out successfully.',
                     snackPosition: SnackPosition.BOTTOM,
                     margin: const EdgeInsets.all(16),
                   );
@@ -444,94 +524,103 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         ),
         actions: [
           // Favorites Button with reactive count badge using GetX Obx
-          Obx(() {
-            final count = favoritesController.count;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.favorite_rounded,
-                    color: AppColors.textPrimary,
+          KeyedSubtree(
+            key: _favoritesKey,
+            child: Obx(() {
+              final count = favoritesController.count;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.favorite_rounded,
+                      color: AppColors.textPrimary,
+                    ),
+                    tooltip: 'Favorites',
+                    onPressed: () {
+                      NavigationController.to.toFavorites();
+                    },
                   ),
-                  tooltip: 'Favorites',
-                  onPressed: () {
-                    NavigationController.to.toFavorites();
-                  },
-                ),
-                if (count > 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Text(
-                        count > 99 ? '99+' : count.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                  if (count > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.error,
+                          shape: BoxShape.circle,
                         ),
-                        textAlign: TextAlign.center,
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          count > 99 ? '99+' : count.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            );
-          }),
+                ],
+              );
+            }),
+          ),
           // Shopping Cart Action
-          CartBadgeButton(
-            onPressed: () => NavigationController.to.toCart(context),
+          KeyedSubtree(
+            key: _cartKey,
+            child: CartBadgeButton(
+              onPressed: () => NavigationController.to.toCart(context),
+            ),
           ),
           const SizedBox(width: 4),
           // User Profile / Auth Action (GetX Obx)
-          Obx(() {
-            final authController = Get.find<AuthController>();
-            final user = authController.currentUser;
-            if (user != null) {
-              return GestureDetector(
-                onTap: () => _showUserMenu(context, authController, user),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: CircleAvatar(
-                    radius: 15,
-                    backgroundColor: AppColors.primaryLight,
-                    backgroundImage: user.image != null
-                        ? NetworkImage(user.image!)
-                        : null,
-                    child: user.image == null
-                        ? Text(
-                            user.firstName.isNotEmpty
-                                ? user.firstName[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
+          KeyedSubtree(
+            key: _profileKey,
+            child: Obx(() {
+              final authController = Get.find<AuthController>();
+              final user = authController.currentUser;
+              if (user != null) {
+                return GestureDetector(
+                  onTap: () => _showUserMenu(context, authController, user),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: AppColors.primaryLight,
+                      backgroundImage: user.image != null
+                          ? NetworkImage(user.image!)
+                          : null,
+                      child: user.image == null
+                          ? Text(
+                              user.firstName.isNotEmpty
+                                  ? user.firstName[0].toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
+                );
+              }
+              return IconButton(
+                icon: const Icon(
+                  Icons.person_outline_rounded,
+                  color: AppColors.textPrimary,
                 ),
+                tooltip: 'Sign In',
+                onPressed: () => NavigationController.to.toLoginModal(),
               );
-            }
-            return IconButton(
-              icon: const Icon(
-                Icons.person_outline_rounded,
-                color: AppColors.textPrimary,
-              ),
-              tooltip: 'Sign In',
-              onPressed: () => NavigationController.to.toLoginModal(),
-            );
-          }),
+            }),
+          ),
           const SizedBox(width: 8),
         ],
       ),

@@ -3,21 +3,17 @@ import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 
-/// GetX Controller managing authentication state and actions
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
 
   AuthController({AuthRepository? authRepository})
     : _authRepository = authRepository ?? AuthRepositoryImpl();
 
-  // Reactive state
   final Rxn<UserModel> _currentUser = Rxn<UserModel>();
   final RxBool _isLoading = false.obs;
   final RxString _errorMessage = ''.obs;
   final RxBool _obscurePassword = true.obs;
   final RxBool _rememberMe = true.obs;
-
-  // Getters
   UserModel? get currentUser => _currentUser.value;
   bool get isAuthenticated => _currentUser.value != null;
   bool get isLoading => _isLoading.value;
@@ -37,7 +33,6 @@ class AuthController extends GetxController {
     _errorMessage.value = '';
   }
 
-  /// Autofill demo credentials for testing DummyJSON authentication
   void fillDemoCredentials(
     TextEditingController usernameController,
     TextEditingController passwordController,
@@ -47,7 +42,27 @@ class AuthController extends GetxController {
     clearError();
   }
 
-  /// Login user via DummyJSON
+  void loginWithCredentials({required String email, required String password}) {
+    final cleanEmail = email.trim();
+    final username = cleanEmail.contains('@')
+        ? cleanEmail.split('@').first
+        : cleanEmail;
+    final firstName = username.isNotEmpty
+        ? username[0].toUpperCase() + username.substring(1)
+        : 'Shopper';
+
+    _currentUser.value = UserModel(
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      username: username,
+      email: cleanEmail,
+      firstName: firstName,
+      lastName: '',
+      token: 'client_session_token',
+    );
+    _errorMessage.value = '';
+    _isLoading.value = false;
+  }
+
   Future<bool> login(String username, String password) async {
     final cleanUsername = username.trim();
     final cleanPassword = password.trim();
@@ -79,7 +94,6 @@ class AuthController extends GetxController {
     );
   }
 
-  /// Register new user with DummyJSON
   Future<bool> register({
     required String username,
     required String email,
@@ -113,7 +127,6 @@ class AuthController extends GetxController {
     );
   }
 
-  /// Logout current user and terminate session
   Future<void> logout() async {
     await _authRepository.logout();
     _currentUser.value = null;

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/login_controller.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/validators.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -56,68 +57,6 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Demo Account Quick Fill Button
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          authController.fillDemoCredentials(
-                            loginController.usernameController,
-                            loginController.passwordController,
-                          );
-                        },
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.auto_awesome_rounded,
-                              color: AppColors.primary,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'For Demo Login with these credential',
-                                    style: TextStyle(
-                                      color: AppColors.primaryDark,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Username: emilys  •  Password: emilyspass',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(
-                              Icons.touch_app_rounded,
-                              color: AppColors.primary,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
                     // Reactive Error Message
                     Obx(() {
                       if (authController.errorMessage.isEmpty) {
@@ -159,9 +98,9 @@ class LoginScreen extends StatelessWidget {
                       );
                     }),
 
-                    // Username Field
+                    // Email Field
                     const Text(
-                      'Username',
+                      'Email',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -170,17 +109,13 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     TextFormField(
-                      controller: loginController.usernameController,
+                      controller: loginController.emailController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: _buildInputDecoration(
-                        'Enter your username (e.g. emilys)',
-                        prefixIcon: Icons.person_outline_rounded,
+                        'Enter your email address',
+                        prefixIcon: Icons.email_outlined,
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Username is required';
-                        }
-                        return null;
-                      },
+                      validator: Validators.validateEmail,
                     ),
                     const SizedBox(height: 10),
 
@@ -199,7 +134,7 @@ class LoginScreen extends StatelessWidget {
                         controller: loginController.passwordController,
                         obscureText: authController.obscurePassword,
                         decoration: _buildInputDecoration(
-                          'Enter your password',
+                          'Enter the password',
                           prefixIcon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -212,12 +147,7 @@ class LoginScreen extends StatelessWidget {
                             onPressed: authController.togglePasswordVisibility,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Password is required';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validatePassword,
                       );
                     }),
                     const SizedBox(height: 8),
@@ -403,7 +333,9 @@ class LoginScreen extends StatelessWidget {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      isDense: true,
+      errorStyle: const TextStyle(fontSize: 11, height: 1.1),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.border),
@@ -415,6 +347,14 @@ class LoginScreen extends StatelessWidget {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.0),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
       ),
     );
   }

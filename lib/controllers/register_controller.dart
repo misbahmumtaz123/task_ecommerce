@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/constants/app_colors.dart';
-import 'auth_controller.dart';
+import '../core/routing/app_routes.dart';
 import 'navigation_controller.dart';
 
 /// Controller managing registration form state and submission
@@ -36,42 +36,23 @@ class RegisterController extends GetxController {
       return;
     }
 
-    final authController = Get.find<AuthController>();
-    final success = await authController.register(
-      username: usernameController.text.trim(),
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-      firstName: firstNameController.text.trim(),
-      lastName: lastNameController.text.trim(),
+    // All validation conditions must be fulfilled before proceeding
+    Get.snackbar(
+      'Account Created! 🎉',
+      'Your account has been created successfully. Please sign in.',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: AppColors.success,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 3),
     );
 
-    if (success) {
-      Get.snackbar(
-        'Account Created! 🎉',
-        'Welcome to AuraStore, ${firstNameController.text.trim()}!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 2),
-      );
-      if (Get.isRegistered<NavigationController>()) {
-        Get.find<NavigationController>().toProducts();
-      }
+    // Navigate to sign in page
+    if (Get.isRegistered<NavigationController>()) {
+      Get.find<NavigationController>().toLogin();
     } else {
-      Get.snackbar(
-        'Registration Failed',
-        authController.errorMessage.isNotEmpty
-            ? authController.errorMessage
-            : 'Unable to register. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
-      );
+      Get.offAllNamed(AppRoutes.login);
     }
   }
 

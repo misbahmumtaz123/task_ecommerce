@@ -169,6 +169,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
             Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.fiber_new_rounded, color: Colors.white, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      'NEW',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
               top: 8,
               right: 8,
               child: IconButton.filled(
@@ -463,6 +492,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   },
                 ),
 
+                // NEW Tag Badge on the product image
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: Container(
+                    key: const Key('product_image_new_tag'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.secondary],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.fiber_new_rounded,
+                            color: Colors.white, size: 16),
+                        SizedBox(width: 4),
+                        Text(
+                          'NEW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // Photo index counter pill
                 if (images.length > 1)
                   Positioned(
@@ -716,35 +786,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
-        _specRow([
-          _SpecData(
-            icon: Icons.inventory_2_outlined,
-            title: 'Stock Status',
-            value: product.availabilityStatus ??
-                (product.stock > 0
-                    ? 'In Stock (${product.stock} units)'
-                    : 'Out of Stock'),
-            highlight: product.stock > 0,
-          ),
-          _SpecData(
-            icon: Icons.local_shipping_outlined,
-            title: 'Shipping',
-            value: product.shippingInformation ?? 'Standard Delivery',
-          ),
-        ]),
-        const SizedBox(height: 12),
-        _specRow([
-          _SpecData(
-            icon: Icons.verified_user_outlined,
-            title: 'Warranty',
-            value: product.warrantyInformation ?? 'Brand Warranty',
-          ),
-          _SpecData(
-            icon: Icons.assignment_return_outlined,
-            title: 'Return Policy',
-            value: product.returnPolicy ?? '30 Days Return',
-          ),
-        ]),
+        _buildSpecSection(product),
       ],
     );
   }
@@ -760,56 +802,115 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _specRow(List<_SpecData> specs) {
-    return Row(
-      children: specs.indexed
-          .expand<Widget>((entry) {
-            final (i, spec) = entry;
-            return [
-              if (i > 0) const SizedBox(width: 12),
-              Expanded(child: _specTile(spec)),
-            ];
-          })
-          .toList(),
+  Widget _buildSpecSection(ProductModel product) {
+    final specs = [
+      _SpecData(
+        icon: Icons.inventory_2_outlined,
+        title: 'Stock Status',
+        value: product.availabilityStatus ??
+            (product.stock > 0
+                ? 'In Stock (${product.stock} units)'
+                : 'Out of Stock'),
+        highlight: product.stock > 0,
+      ),
+      _SpecData(
+        icon: Icons.local_shipping_outlined,
+        title: 'Shipping',
+        value: product.shippingInformation ?? 'Standard Delivery',
+      ),
+      _SpecData(
+        icon: Icons.verified_user_outlined,
+        title: 'Warranty',
+        value: product.warrantyInformation ?? 'Brand Warranty',
+      ),
+      _SpecData(
+        icon: Icons.assignment_return_outlined,
+        title: 'Return Policy',
+        value: product.returnPolicy ?? '30 Days Return',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 600;
+        final isVeryNarrow = constraints.maxWidth < 280;
+        final crossAxisCount = isWide ? 4 : (isVeryNarrow ? 1 : 2);
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: specs.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 84,
+          ),
+          itemBuilder: (context, index) => _specTile(specs[index]),
+        );
+      },
     );
   }
 
   Widget _specTile(_SpecData spec) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      height: 84,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(spec.icon,
-              size: 22,
-              color: spec.highlight ? AppColors.success : AppColors.primary),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: (spec.highlight ? AppColors.success : AppColors.primary)
+                  .withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Icon(
+                spec.icon,
+                size: 20,
+                color: spec.highlight ? AppColors.success : AppColors.primary,
+              ),
+            ),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(spec.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 2),
-                Text(spec.value,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: spec.highlight
-                            ? AppColors.success
-                            : AppColors.textPrimary)),
+                Text(
+                  spec.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  spec.value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                    color: spec.highlight
+                        ? AppColors.success
+                        : AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -849,13 +950,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Customer Reviews (${product.reviews.length})',
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary),
+            Expanded(
+              child: Text(
+                'Customer Reviews (${product.reviews.length})',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary),
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
               children: [
                 const Icon(Icons.star_rounded,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../models/category_model.dart';
 
-//Horizontal category filter
+//category filter
 class CategorySelector extends StatelessWidget {
   final List<CategoryModel> categories;
   final String? selectedSlug;

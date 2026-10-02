@@ -323,26 +323,117 @@ class CartScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Clear Cart'),
-        content: const Text(
-          'Are you sure you want to remove all items from your cart?',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              cart.clearCart();
-              Navigator.of(dialogCtx).pop();
-            },
-            child: const Text(
-              'Clear',
-              style: TextStyle(color: AppColors.error),
+        backgroundColor: AppColors.surface,
+        contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Warning Icon Badge
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.delete_sweep_rounded,
+                color: AppColors.error,
+                size: 32,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 18),
+            const Text(
+              'Clear Cart?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Are you sure you want to remove all items from your shopping cart? This action cannot be undone.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+
+            // 2 Stylish Buttons: Cancel & Clear
+            Row(
+              children: [
+                // Stylish Cancel Button
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(
+                        color: AppColors.border,
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      backgroundColor: AppColors.surfaceVariant,
+                      foregroundColor: AppColors.textPrimary,
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Stylish Clear Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      cart.clearCart();
+                      Navigator.of(dialogCtx).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shadowColor: AppColors.error.withValues(alpha: 0.4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.delete_outline_rounded, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
