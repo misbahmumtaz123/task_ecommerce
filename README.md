@@ -4,12 +4,12 @@ A production-grade, feature-rich eCommerce mobile application built with **Flutt
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 ### 🛍️ 1. Product Catalog & Discovery
-- **Fixed Header Layout**: Search bar, category filter chips, active product count, and sort controls remain fixed at the top while only catalog items scroll.
+- **Fixed Header Layout**: Search bar, category filter chips, active product count and sort controls remain fixed at the top while only catalog items scroll.
 - **Dynamic Category Filtering**: Seamless switching between categories with an instant "All" reset filter.
-- **Glassmorphic Sort Dropdown**: Modern floating frosted-glass container with clean sort options (Default, Price: Low to High, Price: High to Low, Rating, Title).
+- **Sort Dropdown**: sort options (Default, Price: Low to High, Price: High to Low, Rating, Title).
 - **Search & Pagination**: Live search with debounce and infinite-scroll pagination fetching from DummyJSON REST API.
 
 ### 🔍 2. Product Detail Experience
@@ -122,6 +122,3 @@ flutter test
 ```
 
 ---
-
-## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
